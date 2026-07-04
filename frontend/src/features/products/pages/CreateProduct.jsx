@@ -1,300 +1,307 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useAuth } from "../../auth/hook/useAuth";
 import { useNavigate } from 'react-router';
-import { useProduct } from '../hooks/useProduct';
+import ContinueWithGoogle from '../../auth/components/ContinueWithGoogle';
 
-const CURRENCIES = [ 'INR', 'USD', 'EUR', 'GBP' ];
-const MAX_IMAGES = 7;
-
-const CreateProduct = () => {
-    const { handleCreateProduct } = useProduct();
+const Register = () => {
+    const { handleRegister } = useAuth();
     const navigate = useNavigate();
 
-    const [ formData, setFormData ] = useState({
-        title: '',
-        description: '',
-        priceAmount: '',
-        priceCurrency: 'INR',
+    const [formData, setFormData] = useState({
+        fullName: '',
+        contactNumber: '',
+        email: '',
+        password: '',
+        isSeller: false
     });
-    const [ images, setImages ] = useState([]); // [{ file, preview }]
-    const [ isDragging, setIsDragging ] = useState(false);
-    const [ isSubmitting, setIsSubmitting ] = useState(false);
-    const fileInputRef = useRef(null);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [ name ]: value }));
-    };
-
-    const addFiles = (files) => {
-        const remaining = MAX_IMAGES - images.length;
-        if (remaining <= 0) return;
-        const toAdd = Array.from(files).slice(0, remaining);
-        const newImages = toAdd.map(file => ({
-            file,
-            preview: URL.createObjectURL(file),
-        }));
-        setImages(prev => [ ...prev, ...newImages ]);
-    };
-
-    const handleFileChange = (e) => {
-        addFiles(e.target.files);
-        e.target.value = '';
-    };
-
-    const handleDrop = useCallback((e) => {
-        e.preventDefault();
-        setIsDragging(false);
-        if (e.dataTransfer.files.length) {
-            addFiles(e.dataTransfer.files);
-        }
-    }, [ images ]);
-
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = () => setIsDragging(false);
-
-    const removeImage = (index) => {
-        setImages(prev => {
-            const updated = [ ...prev ];
-            URL.revokeObjectURL(updated[ index ].preview);
-            updated.splice(index, 1);
-            return updated;
-        });
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitting(true);
-        try {
-            const data = new FormData();
-            data.append('title', formData.title);
-            data.append('description', formData.description);
-            data.append('priceAmount', formData.priceAmount);
-            data.append('priceCurrency', formData.priceCurrency);
-            images.forEach(img => data.append('images', img.file));
-            await handleCreateProduct(data);
-            navigate('/');
-        } catch (err) {
-            console.error('Failed to create product', err);
-        } finally {
-            setIsSubmitting(false);
-        }
+        await handleRegister({
+            email: formData.email,
+            contact: formData.contactNumber,
+            password: formData.password,
+            isSeller: formData.isSeller,
+            fullname: formData.fullName
+        });
+        navigate("/");
     };
 
+    const inputStyle = {
+        color: '#1b1c1a',
+        borderBottom: '1px solid #d0c5b5',
+        fontFamily: "'Inter', sans-serif"
+    };
+
+    const handleFocus = (e) => { e.target.style.borderBottomColor = '#C9A96E'; };
+    const handleBlur = (e) => { e.target.style.borderBottomColor = '#d0c5b5'; };
+
     return (
-        <div className="min-h-screen bg-[#131313] text-[#e5e2e1] font-sans selection:bg-[#FFD700] selection:text-[#131313]">
+        <>
+            {/* Google Fonts */}
+            <link
+                href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap"
+                rel="stylesheet"
+            />
 
-            {/* Page shell — constrained width, centred */}
-            <div className="max-w-6xl mx-auto px-6 lg:px-12">
-
-                {/* Nav Brand */}
-                <div className="pt-8 pb-0">
-                    <span className="text-[#FFD700] text-xs font-bold tracking-[0.25em] uppercase font-[Manrope,sans-serif]">
-                        Snitch.
-                    </span>
-                </div>
-
-                {/* Header */}
-                <div className="pt-6 pb-2 flex items-center gap-4">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="text-[#d0c6ab] hover:text-[#FFD700] transition-colors duration-200 text-xl leading-none"
-                        aria-label="Go back"
-                    >
-                        ←
-                    </button>
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white font-[Manrope,sans-serif]">
-                            New Listing
-                        </h1>
-                        <div className="mt-2 h-[2px] w-16 bg-gradient-to-r from-[#e9c400] to-[#FFD700]" />
+            <div
+                className="min-h-screen flex flex-col lg:flex-row selection:bg-[#C9A96E]/30"
+                style={{ backgroundColor: '#fbf9f6', fontFamily: "'Inter', sans-serif" }}
+            >
+                {/* ── LEFT: Editorial Image Panel ── */}
+                <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ backgroundColor: '#f5f3f0' }}>
+                    <img
+                        src="/snitch_editorial.png"
+                        alt="Snitch Fashion Editorial"
+                        className="absolute inset-0 w-full h-full object-cover"
+                        style={{ filter: 'sepia(20%) brightness(0.92)' }}
+                    />
+                    <div
+                        className="absolute inset-0"
+                        style={{ background: 'linear-gradient(to top, rgba(27,24,20,0.45) 0%, rgba(27,24,20,0.05) 50%, transparent 100%)' }}
+                    />
+                    <div className="absolute inset-0 p-14 flex flex-col justify-between z-10">
+                        <span
+                            className="text-sm font-medium tracking-[0.35em] uppercase"
+                            style={{ fontFamily: "'Cormorant Garamond', serif", color: '#C9A96E' }}
+                        >
+                            Snitch.
+                        </span>
+                        <div>
+                            <p
+                                className="text-5xl xl:text-6xl font-light leading-[1.08] text-white mb-5"
+                                style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                            >
+                                Define your<br />
+                                <em>aesthetic.</em>
+                            </p>
+                            <p className="text-sm font-light leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                                Join the exclusive movement of creators and brands redefining the modern fashion landscape.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="pt-10 pb-20">
+                {/* ── RIGHT: Form Panel ── */}
+                <div
+                    className="w-full lg:w-1/2 flex items-center justify-center min-h-screen px-8 sm:px-14 lg:px-20 py-16 overflow-y-auto"
+                    style={{ backgroundColor: '#fbf9f6' }}
+                >
+                    <div className="w-full max-w-sm">
 
-                    {/* ── Two-column grid on desktop ── */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 lg:items-start">
+                        {/* Mobile brand mark */}
+                        <div className="lg:hidden mb-14">
+                            <span
+                                className="text-sm tracking-[0.35em] uppercase"
+                                style={{ fontFamily: "'Cormorant Garamond', serif", color: '#C9A96E' }}
+                            >
+                                Snitch.
+                            </span>
+                        </div>
 
-                        {/* ── LEFT COLUMN — text fields ── */}
-                        <div className="flex flex-col gap-10">
+                        {/* Header */}
+                        <div className="mb-12">
+                            <p
+                                className="text-[10px] uppercase tracking-[0.22em] mb-4 font-medium"
+                                style={{ color: '#C9A96E' }}
+                            >
+                                Welcome to Snitch
+                            </p>
+                            <h1
+                                className="text-[2.6rem] xl:text-5xl font-light leading-[1.1]"
+                                style={{ fontFamily: "'Cormorant Garamond', serif", color: '#1b1c1a' }}
+                            >
+                                Elevate Your Style
+                            </h1>
+                        </div>
 
-                            {/* Product Title */}
+                        {/* Form */}
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-9">
+
+                            {/* Full Name */}
                             <div className="flex flex-col gap-2">
                                 <label
-                                    htmlFor="title"
-                                    className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#FFD700]/70 font-[Inter,sans-serif]"
+                                    htmlFor="reg-fullName"
+                                    className="text-[10px] uppercase tracking-[0.18em] font-medium"
+                                    style={{ color: '#7A6E63' }}
                                 >
-                                    Product Title
+                                    Full Name
                                 </label>
                                 <input
-                                    id="title"
+                                    id="reg-fullName"
                                     type="text"
-                                    name="title"
-                                    value={formData.title}
+                                    name="fullName"
+                                    value={formData.fullName}
                                     onChange={handleChange}
                                     required
-                                    placeholder="e.g. Oversized Linen Shirt"
-                                    className="bg-[#1c1b1b] text-white border-b-2 border-[#4d4732] focus:border-[#FFD700] outline-none px-3 py-3 text-base transition-colors duration-300 placeholder:text-[#4d4732] font-[Inter,sans-serif]"
+                                    placeholder="e.g. John Doe"
+                                    className="w-full bg-transparent outline-none py-3 text-sm transition-colors duration-300"
+                                    style={inputStyle}
+                                    onFocus={handleFocus}
+                                    onBlur={handleBlur}
                                 />
                             </div>
 
-                            {/* Description */}
+                            {/* Contact Number */}
                             <div className="flex flex-col gap-2">
                                 <label
-                                    htmlFor="description"
-                                    className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#FFD700]/70 font-[Inter,sans-serif]"
+                                    htmlFor="reg-contact"
+                                    className="text-[10px] uppercase tracking-[0.18em] font-medium"
+                                    style={{ color: '#7A6E63' }}
                                 >
-                                    Description
+                                    Contact Number
                                 </label>
-                                <textarea
-                                    id="description"
-                                    name="description"
-                                    value={formData.description}
+                                <input
+                                    id="reg-contact"
+                                    type="tel"
+                                    name="contactNumber"
+                                    value={formData.contactNumber}
                                     onChange={handleChange}
-                                    rows={5}
-                                    placeholder="Describe the product — material, fit, details..."
-                                    className="bg-[#1c1b1b] text-white border-b-2 border-[#4d4732] focus:border-[#FFD700] outline-none px-3 py-3 text-base transition-colors duration-300 placeholder:text-[#4d4732] resize-none leading-relaxed font-[Inter,sans-serif]"
+                                    required
+                                    placeholder="+91 98765 43210"
+                                    className="w-full bg-transparent outline-none py-3 text-sm transition-colors duration-300"
+                                    style={inputStyle}
+                                    onFocus={handleFocus}
+                                    onBlur={handleBlur}
                                 />
                             </div>
 
-                            {/* Price — Amount + Currency */}
+                            {/* Email */}
                             <div className="flex flex-col gap-2">
-                                <label className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#FFD700]/70 font-[Inter,sans-serif]">
-                                    Price
-                                </label>
-                                <div className="flex gap-4 items-end">
-                                    {/* Amount */}
-                                    <div className="flex flex-col gap-1 flex-[2]">
-                                        <span className="text-[9px] uppercase tracking-widest text-[#999077] font-[Inter,sans-serif]">Amount</span>
-                                        <input
-                                            id="priceAmount"
-                                            type="number"
-                                            name="priceAmount"
-                                            value={formData.priceAmount}
-                                            onChange={handleChange}
-                                            required
-                                            min="0"
-                                            step="0.01"
-                                            placeholder="0.00"
-                                            className="bg-[#1c1b1b] text-white border-b-2 border-[#4d4732] focus:border-[#FFD700] outline-none px-3 py-3 text-base transition-colors duration-300 placeholder:text-[#4d4732] font-[Inter,sans-serif] w-full"
-                                        />
-                                    </div>
-                                    {/* Currency */}
-                                    <div className="flex flex-col gap-1 flex-[1]">
-                                        <span className="text-[9px] uppercase tracking-widest text-[#999077] font-[Inter,sans-serif]">Currency</span>
-                                        <select
-                                            id="priceCurrency"
-                                            name="priceCurrency"
-                                            value={formData.priceCurrency}
-                                            onChange={handleChange}
-                                            className="bg-[#1c1b1b] text-white border-b-2 border-[#4d4732] focus:border-[#FFD700] outline-none px-3 py-3 text-base transition-colors duration-300 font-[Inter,sans-serif] w-full cursor-pointer appearance-none"
-                                        >
-                                            {CURRENCIES.map(c => (
-                                                <option key={c} value={c}>{c}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>{/* end LEFT COLUMN */}
-
-                        {/* ── RIGHT COLUMN — images ── */}
-                        <div className="flex flex-col gap-3">
-                            <div className="flex items-center justify-between">
-                                <label className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#FFD700]/70 font-[Inter,sans-serif]">
-                                    Images
-                                </label>
-                                <span className="text-[10px] text-[#999077] font-[Inter,sans-serif]">
-                                    {images.length}/{MAX_IMAGES}
-                                </span>
-                            </div>
-
-                            {/* Drop Zone */}
-                            {images.length < MAX_IMAGES && (
-                                <div
-                                    onDrop={handleDrop}
-                                    onDragOver={handleDragOver}
-                                    onDragLeave={handleDragLeave}
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className={`
-                                    border-2 border-dashed rounded-sm px-6 py-12 lg:py-16 flex flex-col items-center gap-3 cursor-pointer transition-all duration-300
-                                    ${isDragging
-                                            ? 'border-[#FFD700] bg-[#FFD700]/5'
-                                            : 'border-[#4d4732] hover:border-[#999077] hover:bg-[#1c1b1b]'
-                                        }
-                                `}
+                                <label
+                                    htmlFor="reg-email"
+                                    className="text-[10px] uppercase tracking-[0.18em] font-medium"
+                                    style={{ color: '#7A6E63' }}
                                 >
-                                    <span className="text-3xl text-[#999077]">↑</span>
-                                    <p className="text-sm text-[#d0c6ab] text-center leading-relaxed font-[Inter,sans-serif]">
-                                        Drop images here or{' '}
-                                        <span className="text-[#FFD700] underline underline-offset-2">tap to upload</span>
-                                    </p>
-                                    <p className="text-[10px] text-[#4d4732] uppercase tracking-wider font-[Inter,sans-serif]">
-                                        Up to {MAX_IMAGES} images
-                                    </p>
+                                    Email Address
+                                </label>
+                                <input
+                                    id="reg-email"
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="hello@example.com"
+                                    className="w-full bg-transparent outline-none py-3 text-sm transition-colors duration-300"
+                                    style={inputStyle}
+                                    onFocus={handleFocus}
+                                    onBlur={handleBlur}
+                                />
+                            </div>
+
+                            {/* Password */}
+                            <div className="flex flex-col gap-2">
+                                <label
+                                    htmlFor="reg-password"
+                                    className="text-[10px] uppercase tracking-[0.18em] font-medium"
+                                    style={{ color: '#7A6E63' }}
+                                >
+                                    Password
+                                </label>
+                                <input
+                                    id="reg-password"
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="••••••••"
+                                    className="w-full bg-transparent outline-none py-3 text-sm transition-colors duration-300"
+                                    style={inputStyle}
+                                    onFocus={handleFocus}
+                                    onBlur={handleBlur}
+                                />
+                            </div>
+
+                            {/* Register as Seller — minimal checkbox */}
+                            <label
+                                htmlFor="reg-isSeller"
+                                className="flex items-center gap-4 cursor-pointer group"
+                            >
+                                <div className="relative flex-shrink-0">
                                     <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={handleFileChange}
-                                        className="hidden"
+                                        id="reg-isSeller"
+                                        type="checkbox"
+                                        name="isSeller"
+                                        checked={formData.isSeller}
+                                        onChange={handleChange}
+                                        className="peer sr-only"
                                     />
+                                    {/* Custom checkbox */}
+                                    <div
+                                        className="w-4 h-4 border transition-all duration-200 flex items-center justify-center peer-checked:border-[#C9A96E]"
+                                        style={{
+                                            borderColor: formData.isSeller ? '#C9A96E' : '#d0c5b5',
+                                            backgroundColor: formData.isSeller ? '#C9A96E' : 'transparent'
+                                        }}
+                                    >
+                                        {formData.isSeller && (
+                                            <svg className="w-2.5 h-2.5" viewBox="0 0 12 12" fill="none">
+                                                <path d="M2 6l3 3 5-5" stroke="#fbf9f6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                        )}
+                                    </div>
                                 </div>
-                            )}
+                                <span
+                                    className="text-[11px] uppercase tracking-[0.15em] transition-colors duration-200"
+                                    style={{ color: formData.isSeller ? '#C9A96E' : '#7A6E63' }}
+                                >
+                                    Register as Seller
+                                </span>
+                            </label>
 
-                            {/* Image Previews — 2-col grid on desktop, horizontal scroll on mobile */}
-                            {images.length > 0 && (
-                                <div className="grid grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-2 mt-1">
-                                    {images.map((img, index) => (
-                                        <div
-                                            key={index}
-                                            className="relative aspect-square rounded-sm overflow-hidden bg-[#201f1f] group"
-                                        >
-                                            <img
-                                                src={img.preview}
-                                                alt={`Preview ${index + 1}`}
-                                                className="w-full h-full object-cover"
-                                            />
-                                            {/* Remove overlay */}
-                                            <button
-                                                type="button"
-                                                onClick={() => removeImage(index)}
-                                                className="absolute inset-0 flex items-center justify-center bg-[#131313]/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white text-xs font-bold"
-                                                aria-label={`Remove image ${index + 1}`}
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            {/* Sign Up Button */}
+                            <button
+                                type="submit"
+                                className="w-full py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 mt-2"
+                                style={{ backgroundColor: '#1b1c1a', color: '#fbf9f6', fontFamily: "'Inter', sans-serif" }}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.backgroundColor = '#C9A96E';
+                                    e.currentTarget.style.color = '#1b1c1a';
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.backgroundColor = '#1b1c1a';
+                                    e.currentTarget.style.color = '#fbf9f6';
+                                }}
+                            >
+                                Sign Up
+                            </button>
 
-                        </div>{/* end RIGHT COLUMN */}
+                            {/* Divider */}
+                            <div className="flex items-center gap-4">
+                                <div className="flex-1 h-px" style={{ backgroundColor: '#e4e2df' }} />
+                                <span className="text-[10px] uppercase tracking-[0.15em]" style={{ color: '#B5ADA3' }}>or</span>
+                                <div className="flex-1 h-px" style={{ backgroundColor: '#e4e2df' }} />
+                            </div>
 
-                    </div>{/* end two-column grid */}
+                            {/* Google SSO */}
+                            <ContinueWithGoogle />
 
-                    {/* Submit — full-width below both columns */}
-                    <div className="mt-10 lg:mt-12">
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full bg-gradient-to-r from-[#e9c400] to-[#ffd700] text-[#131313] font-bold tracking-wide py-4 px-8 rounded-sm hover:shadow-[0_0_24px_rgba(255,215,0,0.25)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 font-[Inter,sans-serif] text-sm uppercase"
-                        >
-                            {isSubmitting ? 'Publishing...' : 'Publish Listing'}
-                        </button>
+                            {/* Footer Link */}
+                            <p className="text-center text-[11px]" style={{ color: '#B5ADA3' }}>
+                                Already have an account?{' '}
+                                <a
+                                    href="/login"
+                                    className="transition-colors duration-200"
+                                    style={{ color: '#7A6E63', textDecoration: 'underline', textUnderlineOffset: '3px' }}
+                                    onMouseEnter={e => e.target.style.color = '#C9A96E'}
+                                    onMouseLeave={e => e.target.style.color = '#7A6E63'}
+                                >
+                                    Sign in
+                                </a>
+                            </p>
+                        </form>
                     </div>
-                </form>
-
-            </div>{/* end max-w-6xl container */}
-        </div>
+                </div>
+            </div>
+        </>
     );
 };
 
-export default CreateProduct;
+export default Register;
