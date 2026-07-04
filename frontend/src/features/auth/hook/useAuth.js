@@ -36,6 +36,5 @@ export const useAuth = () => {
         }
     }
 
-    return { handleRegister, handleLogin, handleGetMe }
-
+    return { handleRegister, handleLogin, handleGetMe } 
 }
