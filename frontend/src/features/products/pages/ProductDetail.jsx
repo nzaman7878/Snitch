@@ -6,8 +6,8 @@ const ProductDetail = () => {
     const { productId } = useParams();
     const [ product, setProduct ] = useState(null);
     const [ selectedImage, setSelectedImage ] = useState(0);
-    const { handleGetProductById } = useProduct();
     const navigate = useNavigate();
+    const { handleGetProductById } = useProduct();
 
     async function fetchProductDetails() {
         try {

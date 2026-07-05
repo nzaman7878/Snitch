@@ -1,53 +1,37 @@
-import { createBrowserRouter } from "react-router";
-import Register from "../features/auth/pages/Register";
-import Login from "../features/auth/pages/Login";
-import CreateProduct from "../features/products/pages/CreateProduct";
-import Dashboard from "../features/products/pages/Dashboard";
-import Protected from "../features/auth/components/Protected";
-import Home from "../features/products/pages/Home";
-import ProductDetail from "../features/products/pages/ProductDetail";
-import SellerProductDetails from "../features/products/pages/SellerProductDetails";
+import { Router } from "express";
+import { validateRegisterUser, validateLoginUser } from "../validator/auth.validator.js";
+import { getMe, googleCallback, login, register } from "../controllers/auth.controller.js";
+import passport from "passport";
+import { config } from "../config/config.js";
+import { authenticateUser } from "../middlewares/auth.middleware.js";
 
-export const routes = createBrowserRouter([
-    {
-        path: "/",
-        element: <Home />,
-    },
-    {
-        path: "/register",
-        element: <Register />,
-    },
-    {
-        path: "/login",
-        element: <Login />,
-    },
-    {
-        path: "/product/:productId",
-        element: <ProductDetail />
-    },
-    {
-        path: "/seller",
-        children: [
-            {
-                path: "/seller/create-product",
+const router = Router();
 
-                element: <Protected role="seller" >
-                    <CreateProduct />
-                </Protected>
-            },
-            {
-                path: "/seller/dashboard",
-                element: <Protected role="seller" >
-                    <Dashboard />
-                </Protected>
-            },
-            {
-                path: "/seller/product/:productId",
-                element: <Protected role="seller" >
-                    <SellerProductDetails />
-                </Protected>
-            }
-        ]
-    }
 
-])
+
+router.post('/register', validateRegisterUser, register)
+
+router.post("/login", validateLoginUser, login)
+
+
+// /api/auth/google
+router.get("/google",
+    passport.authenticate("google", { scope: [ "profile", "email" ] }))
+
+router.get("/google/callback",
+    passport.authenticate("google", {
+        session: false,
+        failureRedirect: config.NODE_ENV == "development" ? "http://localhost:5173/login" : "/login"
+    }),
+    googleCallback,
+)
+
+
+/**
+ * @route GET /api/auth/me
+ * @description Get the authenticated user's profile
+ * @access Private
+ */
+router.get('/me', authenticateUser, getMe)
+
+export default router;
