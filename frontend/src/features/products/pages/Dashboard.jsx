@@ -85,11 +85,13 @@ const Dashboard = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-16 pb-24">
                             {sellerProducts.map(product => {
                                 const imageUrl = product.images && product.images.length > 0
-                                    ? product.images[0].url
+                                    ? product.images[ 0 ].url
                                     : '/snitch_editorial_warm.png'; // Fallback to our warm editorial
 
                                 return (
-                                    <div key={product._id} className="group cursor-pointer flex flex-col">
+                                    <div
+                                        onClick={() => { navigate(`/seller/product/${product._id}`) }}
+                                        key={product._id} className="group cursor-pointer flex flex-col">
                                         {/* Image Container */}
                                         <div className="aspect-[4/5] overflow-hidden mb-6" style={{ backgroundColor: '#f5f3f0' }}>
                                             <img
