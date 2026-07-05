@@ -22,11 +22,11 @@ const tokens = {
 
 const Cart = () => {
     const cartItems = useSelector(state => state.cart.items)
-    const { handleGetCart } = useCart()
+    const { handleGetCart, handleIncrementCartItem } = useCart()
     const navigate = useNavigate()
 
     /* Local quantity state — key: cartItem._id, value: number */
-    const [quantities, setQuantities] = useState({})
+    const [ quantities, setQuantities ] = useState({})
 
     useEffect(() => {
         handleGetCart()
@@ -37,22 +37,22 @@ const Cart = () => {
         if (cartItems?.length) {
             const initial = {}
             cartItems.forEach(item => {
-                initial[item._id] = item.quantity ?? 1
+                initial[ item._id ] = item.quantity ?? 1
             })
             setQuantities(initial)
         }
-    }, [cartItems])
+    }, [ cartItems ])
 
     const changeQty = (id, delta) => {
         setQuantities(prev => ({
             ...prev,
-            [id]: Math.max(1, (prev[id] ?? 1) + delta),
+            [ id ]: Math.max(1, (prev[ id ] ?? 1) + delta),
         }))
     }
 
     /* ─── Derived totals ─── */
     const subtotal = cartItems?.reduce((sum, item) => {
-        const qty = quantities[item._id] ?? item.quantity ?? 1
+        const qty = quantities[ item._id ] ?? item.quantity ?? 1
         return sum + (item.price?.amount ?? 0) * qty
     }, 0) ?? 0
 
@@ -67,13 +67,15 @@ const Cart = () => {
     }
 
     const getDisplayImage = (product, variant) => {
-        if (variant?.images?.length) return variant.images[0].url
-        if (product?.images?.length) return product.images[0].url
+        if (variant?.images?.length) return variant.images[ 0 ].url
+        if (product?.images?.length) return product.images[ 0 ].url
         return null
     }
 
     const formatCurrency = (amount, currency = 'INR') =>
         `${currency} ${Number(amount).toLocaleString('en-IN')}`
+
+    console.log(cartItems)
 
     /* ─── Empty state ─── */
     if (!cartItems?.length) {
@@ -157,7 +159,7 @@ const Cart = () => {
                 className="min-h-screen pb-24 selection:bg-[#C9A96E]/30"
                 style={{ backgroundColor: tokens.surface, fontFamily: "'Inter', sans-serif" }}
             >
-               
+
 
                 {/* ── Main Content ── */}
                 <div className="max-w-7xl mx-auto px-8 lg:px-16 xl:px-24 pt-12 lg:pt-20">
@@ -190,11 +192,11 @@ const Cart = () => {
                             {/* ── Cart Item List ── */}
                             <div className="flex flex-col gap-6">
                                 {cartItems.map(item => {
-                                    const { product, variant: variantId, price, _id } = item
+                                    const { product, variant: variantId, price, product: { _id } } = item
                                     const variantDetail = getVariantDetails(product, variantId)
                                     const imageUrl = getDisplayImage(product, variantDetail)
                                     const displayPrice = price ?? variantDetail?.price ?? product?.price
-                                    const qty = quantities[_id] ?? item.quantity ?? 1
+                                    const qty = quantities[ _id ] ?? item.quantity ?? 1
                                     const attributes = variantDetail?.attributes ?? {}
                                     const stock = variantDetail?.stock
 
@@ -245,7 +247,7 @@ const Cart = () => {
                                                     {/* Variant Attribute Chips */}
                                                     {Object.keys(attributes).length > 0 && (
                                                         <div className="flex flex-wrap gap-2 mb-3">
-                                                            {Object.entries(attributes).map(([key, val]) => (
+                                                            {Object.entries(attributes).map(([ key, val ]) => (
                                                                 <span
                                                                     key={key}
                                                                     className="px-3 py-1 text-[9px] uppercase tracking-[0.18em] font-medium"
@@ -305,7 +307,7 @@ const Cart = () => {
                                                         </span>
                                                         <button
                                                             id={`qty-inc-${_id}`}
-                                                            onClick={() => changeQty(_id, 1)}
+                                                            onClick={() => handleIncrementCartItem({ productId: _id, variantId })}
                                                             className="w-9 h-9 flex items-center justify-center text-sm font-light transition-colors hover:opacity-60"
                                                             style={{ color: tokens.onSurface, borderLeft: `1px solid ${tokens.outlineVariant}` }}
                                                             aria-label="Increase quantity"

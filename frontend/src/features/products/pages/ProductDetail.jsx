@@ -254,24 +254,27 @@ const ProductDetail = () => {
                             {/* Actions */}
                             <div className="flex flex-col gap-4 mt-auto">
                                 <button
-                                    className="w-full py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300"
+                                    disabled={!activeVariant}
+                                    className={`w-full py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 ${!activeVariant ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     style={{
                                         backgroundColor: '#1b1c1a',
                                         color: '#fbf9f6',
                                         fontFamily: "'Inter', sans-serif"
                                     }}
                                     onMouseEnter={e => {
+                                        if (!activeVariant) return;
                                         e.currentTarget.style.backgroundColor = '#C9A96E';
                                         e.currentTarget.style.color = '#1b1c1a';
                                     }}
                                     onMouseLeave={e => {
+                                        if (!activeVariant) return;
                                         e.currentTarget.style.backgroundColor = '#1b1c1a';
                                         e.currentTarget.style.color = '#fbf9f6';
                                     }}
                                     onClick={() => {
                                         handleAddItem({
                                             productId: product._id,
-                                            variantId: activeVariant._id
+                                            variantId: activeVariant?._id
                                         })
                                     }}
                                 >
