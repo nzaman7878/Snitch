@@ -11,7 +11,7 @@ const client = new ImageKit({
 export async function uploadFile({ buffer, fileName, folder = "snitch" }) {
     try {
         const result = await client.files.upload({
-            file: buffer,
+            file: buffer.toString('base64'),
             fileName,
             folder
         });
