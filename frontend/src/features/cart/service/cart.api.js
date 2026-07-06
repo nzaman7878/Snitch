@@ -46,6 +46,15 @@ export const verifyCartOrder = async ({ razorpay_order_id, razorpay_payment_id, 
         razorpay_payment_id,
         razorpay_signature
     })
+    return response.data
+}
 
+export const getOrderDetails = async (orderId) => {
+    const response = await cartApiInstance.get(`/order/${orderId}`)
+    return response.data
+}
+
+export const getLatestOrder = async () => {
+    const response = await cartApiInstance.get('/order/latest')
     return response.data
 }

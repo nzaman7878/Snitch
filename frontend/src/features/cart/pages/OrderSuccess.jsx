@@ -1,5 +1,7 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useLocation, Link } from 'react-router'
+import { useSelector } from 'react-redux'
+import { getOrderDetails, getLatestOrder } from '../service/cart.api'
 
 const tokens = {
     surface: '#fbf9f6',
@@ -19,9 +21,44 @@ const tokens = {
 
 const OrderSuccess = () => {
     const location = useLocation()
+    const { user } = useSelector(state => state.auth)
 
     const queryParams = new URLSearchParams(location.search)
-    const orderId = queryParams.get("order_id") || "SN-00000"
+    const orderIdParam = queryParams.get("order_id")
+
+    const [order, setOrder] = useState(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const fetchOrder = async () => {
+            try {
+                if (orderIdParam && orderIdParam !== "SN-00000") {
+                    const data = await getOrderDetails(orderIdParam)
+                    if (data.success) {
+                        setOrder(data.order)
+                    }
+                } else {
+                    const data = await getLatestOrder()
+                    if (data.success) {
+                        setOrder(data.order)
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching order details:", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchOrder()
+    }, [orderIdParam])
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: tokens.surface }}>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: tokens.primary }}></div>
+            </div>
+        )
+    }
 
     return (
         <>
@@ -63,7 +100,7 @@ const OrderSuccess = () => {
                                         className="text-2xl"
                                         style={{ fontFamily: "'Cormorant Garamond', serif", color: tokens.primaryDark }}
                                     >
-                                        #{orderId}
+                                        #{order?.razorpay?.orderId || "SN-00000"}
                                     </p>
                                 </div>
                             </section>
@@ -79,32 +116,38 @@ const OrderSuccess = () => {
                                     Order Summary
                                 </h3>
                                 
-                                <div className="flex gap-6 items-center">
-                                    <div 
-                                        className="w-24 h-32 flex-shrink-0 overflow-hidden"
-                                        style={{ backgroundColor: tokens.surfaceHigh }}
-                                    >
-                                        <img 
-                                            className="w-full h-full object-cover grayscale-[20%]" 
-                                            alt="Close-up of a high-end luxury wool coat" 
-                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2RecxLWsxoaJynjbfvLhuprDTMGsixBfioU4mbbHAwGqbpMf6F_huInjecTUxna_Zu_L7Gi4m-t0JDR9fsydoDl1zu3a-c0YusFQtRSFCdag1T6MBqd8acu7PunJfNXzTc5uK4eBNrw1lh0lgL_9CbR2AZs24nUxgGwKlUYjOEqEof9FSZrlOpzDmxlNMsvGmGAEPWFT42HixJtHAGEYo2R4TR2b-IV0kxjCslE4okGTbl-Ikc7WyUMQtSnfcurwHAc1qshFN3Ho"
-                                        />
-                                    </div>
-                                    <div className="flex-grow space-y-1">
-                                        <h4 
-                                            className="text-lg"
-                                            style={{ fontFamily: "'Cormorant Garamond', serif" }}
-                                        >
-                                            Architectural Wool Overcoat
-                                        </h4>
-                                        <p 
-                                            className="text-sm uppercase tracking-tighter"
-                                            style={{ color: tokens.outline }}
-                                        >
-                                            Camel / Large
-                                        </p>
-                                        <p className="font-semibold mt-2">$1,450.00</p>
-                                    </div>
+                                <div className="space-y-6">
+                                    {order?.orderItems?.map((item, index) => (
+                                        <div key={index} className="flex gap-6 items-center">
+                                            <div 
+                                                className="w-24 h-32 flex-shrink-0 overflow-hidden"
+                                                style={{ backgroundColor: tokens.surfaceHigh }}
+                                            >
+                                                <img 
+                                                    className="w-full h-full object-cover grayscale-[20%]" 
+                                                    alt={item.title} 
+                                                    src={item.images?.[0]?.url || "https://placehold.co/400x500/eae8e5/7A6E63?text=Snitch."}
+                                                />
+                                            </div>
+                                            <div className="flex-grow space-y-1">
+                                                <h4 
+                                                    className="text-lg"
+                                                    style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                                                >
+                                                    {item.title}
+                                                </h4>
+                                                <p 
+                                                    className="text-sm uppercase tracking-tighter"
+                                                    style={{ color: tokens.outline }}
+                                                >
+                                                    Qty: {item.quantity}
+                                                </p>
+                                                <p className="font-semibold mt-2">
+                                                    {item.price?.currency === "USD" ? "$" : "₹"}{item.price?.amount?.toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                                 
                                 <div 
@@ -116,7 +159,7 @@ const OrderSuccess = () => {
                                         style={{ color: tokens.secondary }}
                                     >
                                         <span>Subtotal</span>
-                                        <span>$1,450.00</span>
+                                        <span>{order?.price?.currency === "USD" ? "$" : "₹"}{order?.price?.amount?.toLocaleString()}</span>
                                     </div>
                                     <div 
                                         className="flex justify-between text-sm uppercase tracking-widest"
@@ -130,7 +173,7 @@ const OrderSuccess = () => {
                                         style={{ fontFamily: "'Cormorant Garamond', serif" }}
                                     >
                                         <span>Total</span>
-                                        <span style={{ color: tokens.primaryDark }}>$1,450.00</span>
+                                        <span style={{ color: tokens.primaryDark }}>{order?.price?.currency === "USD" ? "$" : "₹"}{order?.price?.amount?.toLocaleString()}</span>
                                     </div>
                                 </div>
                             </section>
@@ -165,9 +208,9 @@ const OrderSuccess = () => {
                                         className="leading-relaxed uppercase tracking-tighter text-sm"
                                         style={{ color: tokens.onSurfaceVariant }}
                                     >
-                                        Julianne V. Sterling<br/>
-                                        742 Avenue Montaigne, Apt 4B<br/>
-                                        Paris, France 75008
+                                        {user?.fullname || "Valued Customer"}<br/>
+                                        {user?.email}<br/>
+                                        {user?.address || "Your details will be verified by our concierge."}
                                     </p>
                                 </div>
                                 
