@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router'
 const Nav = () => {
     const navigate = useNavigate()
     const user = useSelector(state => state.auth.user)
-    const cartItems = useSelector(state => state.cart.items)
+    const cartItems = useSelector(state => state.cart?.items)
 
     return (
         <nav className="px-8 lg:px-16 xl:px-24 pt-10 pb-6 flex items-center justify-between border-b" style={{ borderColor: '#e4e2df' }}>
@@ -29,11 +29,11 @@ const Nav = () => {
                             aria-label="Shopping cart"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                                <line x1="3" y1="6" x2="21" y2="6"/>
-                                <path d="M16 10a4 4 0 0 1-8 0"/>
+                                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                                <line x1="3" y1="6" x2="21" y2="6" />
+                                <path d="M16 10a4 4 0 0 1-8 0" />
                             </svg>
-                            {cartItems.length > 0 && (
+                            {cartItems?.length > 0 && (
                                 <span
                                     className="absolute -top-2 -right-2 flex items-center justify-center rounded-full text-white"
                                     style={{
