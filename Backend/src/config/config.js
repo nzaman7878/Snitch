@@ -37,6 +37,8 @@ if (!process.env.RAZORPAY_KEY_SECRET) {
     throw new Error("RAZORPAY_KEY_SECRET is not defined in environment variables")
 }
 
+const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || "default_webhook_secret"
+
 
 export const config = {
     MONGO_URI: process.env.MONGO_URI,
@@ -47,6 +49,7 @@ export const config = {
     IMAGEKIT_PRIVATE_KEY: process.env.IMAGEKIT_PRIVATE_KEY,
     IMAGEKIT_PUBLIC_KEY: process.env.IMAGEKIT_PUBLIC_KEY,
     IMAGEKIT_URL_ENDPOINT: process.env.IMAGEKIT_URL_ENDPOINT,
-        RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
-    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET
+    RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
+    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
+    RAZORPAY_WEBHOOK_SECRET
 }
