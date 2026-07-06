@@ -199,6 +199,8 @@ const Cart = () => {
                                     const qty = quantities[ _id ] ?? item.quantity ?? 1
                                     const attributes = variantDetail?.attributes ?? {}
                                     const stock = variantDetail?.stock
+                                    const variantPrice = variantDetail?.price
+
 
                                     return (
                                         <div
@@ -281,6 +283,16 @@ const Cart = () => {
                                                             {stock > 0 ? `${stock} in stock` : 'Out of stock'}
                                                         </p>
                                                     )}
+                                                    {
+                                                        displayPrice.amount !== variantPrice.amount && (
+                                                            <>
+                                                                {displayPrice.amount > variantPrice.amount
+                                                                    ? <p className="text-[10px] uppercase tracking-[0.15em] mb-4 text-green-800 font-bold" > you will get this at {formatCurrency(variantPrice.amount, variantPrice.currency)} save {Math.abs(variantPrice.amount - displayPrice.amount)}.  </p>
+                                                                    : <p className="text-[10px] uppercase tracking-[0.15em] mb-4 text-red-600 font-bold" > Warning this product will cost you {Math.abs(variantPrice.amount - displayPrice.amount)} more.  </p>
+                                                                }
+                                                            </>
+                                                        )
+                                                    }
                                                 </div>
 
                                                 {/* Bottom Row: Quantity + Remove */}
