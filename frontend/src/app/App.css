@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+@theme {
+  --color-snitch-surface: #fbf9f6;
+  --color-snitch-primary: #1b1c1a;
+  --color-snitch-accent: #C9A96E;
+  --color-snitch-muted: #7A6E63;
+  --color-snitch-border: #e4e2df;
+  
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body: 'Inter', sans-serif;
+}

@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router';
 import { useProduct } from '../hooks/useProduct';
 import { useCart } from '../../cart/hook/useCart';
 import { useWishlist } from '../hooks/useWishlist';
+import toast from 'react-hot-toast';
 
 const ProductDetail = () => {
     const { productId } = useParams();
@@ -99,8 +100,8 @@ const ProductDetail = () => {
 
     if (!product) {
         return (
-            <div className="min-h-screen flex items-center justify-center selection:bg-[#C9A96E]/30" style={{ backgroundColor: '#fbf9f6' }}>
-                <p style={{ fontFamily: "'Inter', sans-serif", color: '#B5ADA3' }} className="text-[10px] uppercase tracking-[0.2em] font-medium animate-pulse">
+            <div className="min-h-screen flex items-center justify-center selection:bg-[#C9A96E]/30 bg-snitch-surface">
+                <p className="text-[10px] uppercase tracking-[0.2em] font-medium animate-pulse font-body text-snitch-muted">
                     Retrieving piece...
                 </p>
             </div>
@@ -120,15 +121,8 @@ const ProductDetail = () => {
 
     return (
         <>
-            {/* Google Fonts */}
-            <link
-                href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap"
-                rel="stylesheet"
-            />
-
             <div
-                className="min-h-screen selection:bg-[#C9A96E]/30 pb-24"
-                style={{ backgroundColor: '#fbf9f6', fontFamily: "'Inter', sans-serif" }}
+                className="min-h-screen selection:bg-[#C9A96E]/30 pb-24 bg-snitch-surface font-body"
             >
 
                 <div className="max-w-7xl mx-auto px-8 lg:px-16 xl:px-24 pt-12 lg:pt-20">
@@ -194,27 +188,25 @@ const ProductDetail = () => {
                         <div className="w-full lg:w-[30%] lg:sticky lg:top-24 flex flex-col pt-4">
 
                             <h1
-                                className="text-4xl md:text-5xl lg:text-6xl font-light leading-[1.05] mb-6"
-                                style={{ fontFamily: "'Cormorant Garamond', serif", color: '#1b1c1a' }}
+                                className="text-4xl md:text-5xl lg:text-6xl font-light leading-[1.05] mb-6 font-display text-snitch-primary"
                             >
                                 {product.title}
                             </h1>
 
                             <div className="mb-8">
                                 <span
-                                    className="text-sm uppercase tracking-[0.2em] font-medium"
-                                    style={{ color: '#1b1c1a' }}
+                                    className="text-sm uppercase tracking-[0.2em] font-medium text-snitch-primary"
                                 >
                                     {displayPrice?.currency} {displayPrice?.amount?.toLocaleString()}
                                 </span>
                             </div>
 
-                            <div className="h-px w-full mb-8" style={{ backgroundColor: '#e4e2df' }} />
+                            <div className="h-px w-full mb-8 bg-snitch-border" />
 
                             {/* Options/Variants */}
                             {Object.entries(availableAttributes).map(([ attrName, values ]) => (
                                 <div key={attrName} className="mb-6">
-                                    <h3 className="text-[10px] uppercase tracking-[0.24em] font-medium mb-3" style={{ color: '#C9A96E' }}>
+                                    <h3 className="text-[10px] uppercase tracking-[0.24em] font-medium mb-3 text-snitch-accent">
                                         {attrName}
                                     </h3>
                                     <div className="flex flex-wrap gap-2">
@@ -245,10 +237,10 @@ const ProductDetail = () => {
                             )}
 
                             <div className="mb-12">
-                                <h3 className="text-[10px] uppercase tracking-[0.24em] font-medium mb-4" style={{ color: '#C9A96E' }}>
+                                <h3 className="text-[10px] uppercase tracking-[0.24em] font-medium mb-4 text-snitch-accent">
                                     The Details
                                 </h3>
-                                <p className="text-sm leading-relaxed" style={{ color: '#7A6E63' }}>
+                                <p className="text-sm leading-relaxed text-snitch-muted">
                                     {product.description}
                                 </p>
                             </div>
@@ -257,27 +249,13 @@ const ProductDetail = () => {
                             <div className="flex flex-col gap-4 mt-auto">
                                 <button
                                     disabled={!activeVariant}
-                                    className={`w-full py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 ${!activeVariant ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    style={{
-                                        backgroundColor: '#1b1c1a',
-                                        color: '#fbf9f6',
-                                        fontFamily: "'Inter', sans-serif"
-                                    }}
-                                    onMouseEnter={e => {
-                                        if (!activeVariant) return;
-                                        e.currentTarget.style.backgroundColor = '#C9A96E';
-                                        e.currentTarget.style.color = '#1b1c1a';
-                                    }}
-                                    onMouseLeave={e => {
-                                        if (!activeVariant) return;
-                                        e.currentTarget.style.backgroundColor = '#1b1c1a';
-                                        e.currentTarget.style.color = '#fbf9f6';
-                                    }}
-                                    onClick={() => {
-                                        handleAddItem({
+                                    className={`w-full py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 font-body bg-snitch-primary text-snitch-surface hover:bg-snitch-accent hover:text-snitch-primary ${!activeVariant ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    onClick={async () => {
+                                        await handleAddItem({
                                             productId: product._id,
                                             variantId: activeVariant?._id
                                         })
+                                        toast.success("Added to Cart")
                                     }}
                                 >
                                     Add to Cart
@@ -285,26 +263,13 @@ const ProductDetail = () => {
 
                                 <button
                                     disabled={!activeVariant}
-                                    className={`w-full py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 border ${!activeVariant ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    style={{
-                                        backgroundColor: 'transparent',
-                                        borderColor: '#d0c5b5',
-                                        color: '#1b1c1a',
-                                        fontFamily: "'Inter', sans-serif"
-                                    }}
-                                    onMouseEnter={e => {
-                                        if (!activeVariant) return;
-                                        e.currentTarget.style.borderColor = '#C9A96E';
-                                    }}
-                                    onMouseLeave={e => {
-                                        if (!activeVariant) return;
-                                        e.currentTarget.style.borderColor = '#d0c5b5';
-                                    }}
+                                    className={`w-full py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 border bg-transparent border-snitch-border text-snitch-primary font-body hover:border-snitch-accent ${!activeVariant ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     onClick={async () => {
                                         await handleAddItem({
                                             productId: product._id,
                                             variantId: activeVariant?._id
                                         });
+                                        toast.success("Added to Cart")
                                         navigate('/cart');
                                     }}
                                 >
@@ -312,20 +277,15 @@ const ProductDetail = () => {
                                 </button>
                                 
                                 <button
-                                    className="w-full flex items-center justify-center gap-2 py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 border"
-                                    style={{
-                                        backgroundColor: 'transparent',
-                                        borderColor: isProductInWishlist(product._id) ? '#C9A96E' : '#d0c5b5',
-                                        color: isProductInWishlist(product._id) ? '#C9A96E' : '#1b1c1a',
-                                        fontFamily: "'Inter', sans-serif"
+                                    className={`w-full flex items-center justify-center gap-2 py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 border bg-transparent font-body hover:border-snitch-accent ${isProductInWishlist(product._id) ? 'border-snitch-accent text-snitch-accent' : 'border-snitch-border text-snitch-primary'}`}
+                                    onClick={async () => {
+                                        await toggleWishlist(product)
+                                        if (!isProductInWishlist(product._id)) {
+                                            toast.success("Added to Wishlist")
+                                        } else {
+                                            toast.success("Removed from Wishlist")
+                                        }
                                     }}
-                                    onMouseEnter={e => {
-                                        e.currentTarget.style.borderColor = '#C9A96E';
-                                    }}
-                                    onMouseLeave={e => {
-                                        e.currentTarget.style.borderColor = isProductInWishlist(product._id) ? '#C9A96E' : '#d0c5b5';
-                                    }}
-                                    onClick={() => toggleWishlist(product)}
                                 >
                                     <svg 
                                         xmlns="http://www.w3.org/2000/svg" 
@@ -344,16 +304,16 @@ const ProductDetail = () => {
                             </div>
 
                             {/* Extra elegant details */}
-                            <div className="mt-14 space-y-4 text-[10px] uppercase tracking-[0.1em]" style={{ color: '#B5ADA3' }}>
-                                <div className="flex justify-between border-b pb-3" style={{ borderColor: '#e4e2df' }}>
+                            <div className="mt-14 space-y-4 text-[10px] uppercase tracking-[0.1em] text-snitch-muted/70">
+                                <div className="flex justify-between border-b border-snitch-border pb-3">
                                     <span>Shipping</span>
                                     <span>Complimentary over INR 15,000</span>
                                 </div>
-                                <div className="flex justify-between border-b pb-3" style={{ borderColor: '#e4e2df' }}>
+                                <div className="flex justify-between border-b border-snitch-border pb-3">
                                     <span>Returns</span>
                                     <span>Within 14 days of delivery</span>
                                 </div>
-                                <div className="flex justify-between border-b pb-3" style={{ borderColor: '#e4e2df' }}>
+                                <div className="flex justify-between border-b border-snitch-border pb-3">
                                     <span>Authenticity</span>
                                     <span>100% Guaranteed</span>
                                 </div>
