@@ -15,6 +15,10 @@ const productSchema = new mongoose.Schema({
         ref: 'user',
         required: true
     },
+    category: {
+        type: String,
+        default: "Uncategorized"
+    },
     price: {
         type: priceSchema,
         required: true
@@ -53,6 +57,7 @@ const productSchema = new mongoose.Schema({
     ]
 }, { timestamps: true })
 
+productSchema.index({ title: 'text', description: 'text' })
 
 const productModel = mongoose.model('product', productSchema);
 

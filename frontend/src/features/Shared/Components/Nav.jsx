@@ -1,27 +1,83 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router'
+import { useAuth } from '../../auth/hook/useAuth'
 
 const Nav = () => {
     const navigate = useNavigate()
     const user = useSelector(state => state.auth.user)
     const cartItems = useSelector(state => state.cart?.items)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+    const { handleLogout } = useAuth()
+
+    const handleSearch = (e) => {
+        e.preventDefault()
+        if (searchQuery.trim()) {
+            navigate(`/?search=${encodeURIComponent(searchQuery.trim())}`)
+        } else {
+            navigate('/')
+        }
+    }
+
+    const onLogout = async () => {
+        await handleLogout()
+        setIsDropdownOpen(false)
+        navigate('/')
+    }
 
     return (
-        <nav className="px-8 lg:px-16 xl:px-24 pt-10 pb-6 flex items-center justify-between border-b" style={{ borderColor: '#e4e2df' }}>
+        <nav className="px-8 lg:px-16 xl:px-24 pt-10 pb-6 flex flex-col md:flex-row gap-6 md:gap-0 items-center justify-between border-b relative" style={{ borderColor: '#e4e2df' }}>
             <Link to="/"
                 className="text-sm font-medium tracking-[0.35em] uppercase hover:opacity-80 transition-opacity"
                 style={{ fontFamily: "'Cormorant Garamond', serif", color: '#C9A96E' }}
             >
                 Snitch.
             </Link>
+
+            {/* Search Bar */}
+            <form onSubmit={handleSearch} className="flex-1 max-w-md mx-8 w-full hidden md:block">
+                <input
+                    type="text"
+                    placeholder="Search archive..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-transparent border-b outline-none pb-2 text-sm px-2 text-center placeholder-gray-400"
+                    style={{ borderColor: '#1b1c1a', color: '#1b1c1a' }}
+                />
+            </form>
+
             <div className="flex gap-6 items-center text-[10px] uppercase tracking-[0.2em] font-medium" style={{ color: '#7A6E63' }}>
                 {user ? (
                     <>
-                        <span style={{ color: '#1b1c1a' }}>{user.fullname}</span>
                         {user.role === 'seller' && (
                             <Link to="/seller/dashboard" className="transition-colors hover:text-[#C9A96E]">Seller Dashboard</Link>
                         )}
+                        
+                        {/* User Dropdown */}
+                        <div className="relative">
+                            <button 
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className="transition-colors hover:text-[#C9A96E] flex items-center gap-1"
+                                style={{ color: '#1b1c1a' }}
+                            >
+                                {user.fullname}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+
+                            {isDropdownOpen && (
+                                <div className="absolute right-0 mt-4 w-48 bg-white border shadow-lg py-2 z-50 flex flex-col" style={{ borderColor: '#e4e2df' }}>
+                                    <Link to="/profile" onClick={() => setIsDropdownOpen(false)} className="px-4 py-3 hover:bg-gray-50 transition-colors text-left" style={{ color: '#1b1c1a' }}>Profile</Link>
+                                    <Link to="/order-success" onClick={() => setIsDropdownOpen(false)} className="px-4 py-3 hover:bg-gray-50 transition-colors text-left" style={{ color: '#1b1c1a' }}>Orders</Link>
+                                    <Link to="/wishlist" onClick={() => setIsDropdownOpen(false)} className="px-4 py-3 hover:bg-gray-50 transition-colors text-left" style={{ color: '#1b1c1a' }}>Wishlist</Link>
+                                    <div className="border-t my-1" style={{ borderColor: '#e4e2df' }}></div>
+                                    <button onClick={onLogout} className="px-4 py-3 hover:bg-gray-50 transition-colors text-left" style={{ color: '#1b1c1a' }}>Logout</button>
+                                </div>
+                            )}
+                        </div>
+
                         <Link
                             to="/cart"
                             className="relative flex items-center hover:opacity-70 transition-opacity"

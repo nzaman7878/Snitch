@@ -19,10 +19,15 @@ export const useProduct = () => {
         return data.products
     }
 
-    async function handleGetAllProducts() {
+    async function handleGetAllProducts(params = {}) {
 
-        const data = await getAllProducts()
-        dispatch(setProducts(data.products))
+        const data = await getAllProducts(params)
+        dispatch(setProducts({
+            products: data.products,
+            totalPages: data.totalPages,
+            currentPage: data.currentPage,
+            totalItems: data.totalItems
+        }))
     }
 
     async function handleGetProductById(productId) {
