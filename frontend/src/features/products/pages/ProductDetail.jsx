@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { useProduct } from '../hooks/useProduct';
 import { useCart } from '../../cart/hook/useCart';
+import { useWishlist } from '../hooks/useWishlist';
 
 const ProductDetail = () => {
     const { productId } = useParams();
@@ -10,7 +11,8 @@ const ProductDetail = () => {
     const [ selectedAttributes, setSelectedAttributes ] = useState({});
     const navigate = useNavigate();
     const { handleGetProductById } = useProduct();
-    const { handleAddItem } = useCart()
+    const { handleAddItem } = useCart();
+    const { toggleWishlist, isProductInWishlist } = useWishlist();
 
 
 
@@ -297,6 +299,37 @@ const ProductDetail = () => {
                                     }}
                                 >
                                     Buy Now
+                                </button>
+                                
+                                <button
+                                    className="w-full flex items-center justify-center gap-2 py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 border"
+                                    style={{
+                                        backgroundColor: 'transparent',
+                                        borderColor: isProductInWishlist(product._id) ? '#C9A96E' : '#d0c5b5',
+                                        color: isProductInWishlist(product._id) ? '#C9A96E' : '#1b1c1a',
+                                        fontFamily: "'Inter', sans-serif"
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.borderColor = '#C9A96E';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.borderColor = isProductInWishlist(product._id) ? '#C9A96E' : '#d0c5b5';
+                                    }}
+                                    onClick={() => toggleWishlist(product)}
+                                >
+                                    <svg 
+                                        xmlns="http://www.w3.org/2000/svg" 
+                                        width="16" height="16" 
+                                        viewBox="0 0 24 24" 
+                                        fill={isProductInWishlist(product._id) ? "#C9A96E" : "none"} 
+                                        stroke="currentColor" 
+                                        strokeWidth="1.5" 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round"
+                                    >
+                                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                                    </svg>
+                                    {isProductInWishlist(product._id) ? 'Saved to Wishlist' : 'Add to Wishlist'}
                                 </button>
                             </div>
 

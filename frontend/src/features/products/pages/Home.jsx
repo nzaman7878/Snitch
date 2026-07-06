@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useProduct } from '../hooks/useProduct';
+import { useWishlist } from '../hooks/useWishlist';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 const Home = () => {
@@ -8,6 +9,7 @@ const Home = () => {
     const totalPages = useSelector(state => state.product.totalPages) || 1;
     const currentPage = useSelector(state => state.product.currentPage) || 1;
     const { handleGetAllProducts } = useProduct();
+    const { toggleWishlist, isProductInWishlist } = useWishlist();
 
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -105,15 +107,36 @@ const Home = () => {
                                         : '/snitch_editorial_warm.png';
 
                                     return (
-                                        <div
-                                            onClick={() => navigate(`/product/${product._id}`)}
-                                            key={product._id} className="group cursor-pointer flex flex-col">
-                                            <div className="aspect-[4/5] overflow-hidden mb-6" style={{ backgroundColor: '#f5f3f0' }}>
+                                        <div key={product._id} className="group cursor-pointer flex flex-col">
+                                            <div 
+                                                className="aspect-[4/5] overflow-hidden mb-6 relative" 
+                                                style={{ backgroundColor: '#f5f3f0' }}
+                                                onClick={() => navigate(`/product/${product._id}`)}
+                                            >
                                                 <img
                                                     src={imageUrl}
                                                     alt={product.title}
                                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                                 />
+                                                
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); toggleWishlist(product); }}
+                                                    className="absolute top-4 right-4 bg-white/80 backdrop-blur p-2 rounded-full hover:bg-white transition-all shadow-sm z-10 opacity-0 group-hover:opacity-100"
+                                                    aria-label="Toggle wishlist"
+                                                >
+                                                    <svg 
+                                                        xmlns="http://www.w3.org/2000/svg" 
+                                                        width="16" height="16" 
+                                                        viewBox="0 0 24 24" 
+                                                        fill={isProductInWishlist(product._id) ? "#C9A96E" : "none"} 
+                                                        stroke={isProductInWishlist(product._id) ? "#C9A96E" : "#1b1c1a"} 
+                                                        strokeWidth="1.5" 
+                                                        strokeLinecap="round" 
+                                                        strokeLinejoin="round"
+                                                    >
+                                                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                                                    </svg>
+                                                </button>
                                             </div>
 
                                             <div className="flex flex-col gap-2">

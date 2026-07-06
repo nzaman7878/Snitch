@@ -18,7 +18,9 @@ const userSchema = new mongoose.Schema({
     },
     googleId: {
         type: String,
-    }
+    },
+    address: { type: String, required: false },
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'product' }]
 })
 
 userSchema.pre("save", async function () {

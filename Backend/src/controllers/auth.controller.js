@@ -21,7 +21,9 @@ async function sendTokenResponse(user, res, message) {
             email: user.email,
             contact: user.contact,
             fullname: user.fullname,
-            role: user.role
+            role: user.role,
+            address: user.address,
+            wishlist: user.wishlist
         }
     })
 
@@ -118,7 +120,47 @@ export const getMe = async (req, res) => {
             email: user.email,
             contact: user.contact,
             fullname: user.fullname,
-            role: user.role
+            role: user.role,
+            address: user.address,
+            wishlist: user.wishlist
         }
     })
+}
+
+export const updateProfile = async (req, res) => {
+    const { fullname, contact, address } = req.body;
+    const userId = req.user._id;
+
+    try {
+        const user = await userModel.findByIdAndUpdate(
+            userId,
+            { fullname, contact, address },
+            { new: true }
+        );
+
+        res.status(200).json({
+            message: "Profile updated successfully",
+            success: true,
+            user: {
+                id: user._id,
+                email: user.email,
+                contact: user.contact,
+                fullname: user.fullname,
+                role: user.role,
+                address: user.address,
+                wishlist: user.wishlist
+            }
+        });
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+}
+
+export const logout = async (req, res) => {
+    res.clearCookie("token");
+    res.status(200).json({
+        success: true,
+        message: "Logged out successfully"
+    });
 }

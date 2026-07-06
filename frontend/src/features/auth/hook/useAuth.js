@@ -1,5 +1,5 @@
 import { setError, setLoading, setUser } from "../state/auth.slice"
-import { register, login, getMe } from "../service/auth.api"
+import { register, login, getMe, updateProfile, logoutApi } from "../service/auth.api"
 import { useDispatch } from "react-redux"
 
 
@@ -36,5 +36,28 @@ export const useAuth = () => {
         }
     }
 
-    return { handleRegister, handleLogin, handleGetMe }
+    async function handleUpdateProfile(data) {
+        try {
+            dispatch(setLoading(true))
+            const response = await updateProfile(data)
+            dispatch(setUser(response.user))
+            return response.user
+        } catch (err) {
+            console.log(err)
+            throw err
+        } finally {
+            dispatch(setLoading(false))
+        }
+    }
+
+    async function handleLogout() {
+        try {
+            await logoutApi()
+            dispatch(setUser(null))
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
+    return { handleRegister, handleLogin, handleGetMe, handleUpdateProfile, handleLogout }
 }
