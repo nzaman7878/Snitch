@@ -141,6 +141,76 @@ export const incrementCartItemQuantity = async (req, res) => {
     })
 }
 
+export const decrementCartItemQuantity = async (req, res) => {
+    const { productId, variantId } = req.params;
+
+    const cart = await cartModel.findOne({ user: req.user._id });
+
+    if (!cart) {
+        return res.status(404).json({
+            message: "Cart not found",
+            success: false
+        });
+    }
+
+    const item = cart.items.find(
+        (item) => item.product.toString() === productId && item.variant?.toString() === variantId
+    );
+
+    if (!item) {
+        return res.status(404).json({
+            message: "Item not found in cart",
+            success: false
+        });
+    }
+
+    if (item.quantity > 1) {
+        // Decrement quantity
+        await cartModel.findOneAndUpdate(
+            { user: req.user._id, "items.product": productId, "items.variant": variantId },
+            { $inc: { "items.$.quantity": -1 } },
+            { new: true }
+        );
+        return res.status(200).json({
+            message: "Cart item quantity decremented successfully",
+            success: true
+        });
+    } else {
+        // Remove item if quantity becomes 0
+        await cartModel.findOneAndUpdate(
+            { user: req.user._id },
+            { $pull: { items: { product: productId, variant: variantId } } },
+            { new: true }
+        );
+        return res.status(200).json({
+            message: "Item removed from cart",
+            success: true
+        });
+    }
+};
+
+export const removeCartItem = async (req, res) => {
+    const { productId, variantId } = req.params;
+
+    const cart = await cartModel.findOneAndUpdate(
+        { user: req.user._id },
+        { $pull: { items: { product: productId, variant: variantId } } },
+        { new: true }
+    );
+
+    if (!cart) {
+        return res.status(404).json({
+            message: "Cart not found",
+            success: false
+        });
+    }
+
+    return res.status(200).json({
+        message: "Item removed from cart successfully",
+        success: true
+    });
+}
+
 export const createOrderController = async (req, res) => {
 
 

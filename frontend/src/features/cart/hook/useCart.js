@@ -1,6 +1,6 @@
-import { addItem, getCart, incrementCartItemApi, createCartOrder, verifyCartOrder } from "../service/cart.api"
+import { addItem, getCart, incrementCartItemApi, decrementCartItemApi, removeCartItemApi, createCartOrder, verifyCartOrder } from "../service/cart.api"
 import { useDispatch } from "react-redux"
-import { setCart, incrementCartItem } from "../state/cart.slice"
+import { setCart, incrementCartItem, decrementCartItem, removeCartItemState } from "../state/cart.slice"
 
 
 export const useCart = () => {
@@ -20,8 +20,13 @@ export const useCart = () => {
     }
 
     async function handleIncrementCartItem({ productId, variantId }) {
-        await incrementCartItemApi({ productId, variantId })
         dispatch(incrementCartItem({ productId, variantId }))
+        try {
+            await incrementCartItemApi({ productId, variantId })
+        } catch (error) {
+            dispatch(decrementCartItem({ productId, variantId }))
+            console.error(error)
+        }
     }
 
     async function handleCreateCartOrder() {
@@ -34,6 +39,36 @@ export const useCart = () => {
         return data.success
     }
 
-    return { handleAddItem, handleGetCart, handleIncrementCartItem, handleCreateCartOrder, handleVerifyCartOrder }
+    async function handleDecrementCartItem({ productId, variantId }) {
+        dispatch(decrementCartItem({ productId, variantId }))
+        try {
+            await decrementCartItemApi({ productId, variantId })
+        } catch (error) {
+            // Revert on failure
+            dispatch(incrementCartItem({ productId, variantId }))
+            console.error(error)
+        }
+    }
+
+    async function handleRemoveCartItem({ productId, variantId }) {
+        // We'd ideally need the original item and quantity to revert properly, but for simplicity, we can fetch cart on failure
+        dispatch(removeCartItemState({ productId, variantId }))
+        try {
+            await removeCartItemApi({ productId, variantId })
+        } catch (error) {
+            console.error(error)
+            handleGetCart() // fallback to fetch latest state
+        }
+    }
+
+    return { 
+        handleAddItem, 
+        handleGetCart, 
+        handleIncrementCartItem, 
+        handleDecrementCartItem,
+        handleRemoveCartItem,
+        handleCreateCartOrder, 
+        handleVerifyCartOrder 
+    }
 
 }
