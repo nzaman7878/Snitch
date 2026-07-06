@@ -284,7 +284,8 @@ const ProductDetail = () => {
                                 </button>
 
                                 <button
-                                    className="w-full py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 border"
+                                    disabled={!activeVariant}
+                                    className={`w-full py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 border ${!activeVariant ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     style={{
                                         backgroundColor: 'transparent',
                                         borderColor: '#d0c5b5',
@@ -292,10 +293,19 @@ const ProductDetail = () => {
                                         fontFamily: "'Inter', sans-serif"
                                     }}
                                     onMouseEnter={e => {
+                                        if (!activeVariant) return;
                                         e.currentTarget.style.borderColor = '#C9A96E';
                                     }}
                                     onMouseLeave={e => {
+                                        if (!activeVariant) return;
                                         e.currentTarget.style.borderColor = '#d0c5b5';
+                                    }}
+                                    onClick={async () => {
+                                        await handleAddItem({
+                                            productId: product._id,
+                                            variantId: activeVariant?._id
+                                        });
+                                        navigate('/cart');
                                     }}
                                 >
                                     Buy Now
