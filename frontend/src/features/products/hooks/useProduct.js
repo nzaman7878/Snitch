@@ -33,6 +33,7 @@ export const useProduct = () => {
             currentPage: data.currentPage,
             totalItems: data.totalItems
         }))
+        return data;
     }
 
     async function handleGetProductById(productId) {
