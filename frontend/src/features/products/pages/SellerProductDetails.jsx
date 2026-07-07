@@ -167,10 +167,12 @@ const SellerProductDetails = () => {
 
   // Handlers for New Variant Form
   const handleAddNewVariant = async () => {
-    // Validate required at least one attribute to be filled
+    // Validate that at least one identifying property is provided (size, color, sku, or dynamic attribute)
     const hasValidAttribute = attributeInputs.some(attr => attr.key.trim() && attr.value.trim());
-    if (!hasValidAttribute) {
-      alert("At least one valid attribute is required.");
+    const hasStandardProperty = newVariant.size.trim() || newVariant.color.trim() || newVariant.sku.trim();
+    
+    if (!hasValidAttribute && !hasStandardProperty) {
+      toast.error("Please provide Size, Color, SKU, or at least one custom attribute.");
       return;
     }
 
@@ -445,7 +447,7 @@ const SellerProductDetails = () => {
 
                   {/* Dynamic Attributes */}
                   <div>
-                    <label className="block text-sm uppercase tracking-wider text-[#6e6258] mb-3">Attributes (e.g. Size, Color) *</label>
+                    <label className="block text-sm uppercase tracking-wider text-[#6e6258] mb-3">Custom Attributes (Optional)</label>
                     <div className="space-y-3">
                       {attributeInputs.map((attr, index) => (
                         <div key={index} className="flex gap-2 items-center">
