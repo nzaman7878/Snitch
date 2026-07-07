@@ -83,6 +83,14 @@ const Dashboard = () => {
 
                         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
                             <button 
+                                onClick={() => navigate('/seller/analytics')}
+                                className="py-4 px-6 text-[11px] uppercase tracking-[0.3em] font-medium border border-[#C9A96E] text-[#C9A96E] bg-transparent text-center flex items-center justify-center gap-2 cursor-pointer hover:bg-[#C9A96E]/10 transition-colors"
+                                style={{ fontFamily: "'Inter', sans-serif" }}
+                            >
+                                <span>Analytics</span>
+                            </button>
+
+                            <button 
                                 onClick={() => navigate('/seller/orders')}
                                 className="py-4 px-6 text-[11px] uppercase tracking-[0.3em] font-medium border border-[#C9A96E] text-[#C9A96E] bg-transparent text-center flex items-center justify-center gap-2 cursor-pointer hover:bg-[#C9A96E]/10 transition-colors"
                                 style={{ fontFamily: "'Inter', sans-serif" }}

@@ -1,8 +1,15 @@
 import express from 'express';
 import { authenticateSeller } from '../middlewares/auth.middleware.js';
-import { getSellerOrders, updateOrderStatus } from '../controllers/order.controller.js';
+import { getSellerOrders, updateOrderStatus, getSellerAnalytics } from '../controllers/order.controller.js';
 
 const router = express.Router();
+
+/**
+ * @route GET /api/orders/seller/analytics
+ * @description Get seller analytics dashboard data
+ * @access Private (Seller only)
+ */
+router.get("/seller/analytics", authenticateSeller, getSellerAnalytics);
 
 /**
  * @route GET /api/orders/seller

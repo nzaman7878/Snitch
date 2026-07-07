@@ -13,6 +13,7 @@ import OrderSuccess from "../features/cart/pages/OrderSuccess";
 import Profile from "../features/auth/pages/Profile";
 import Wishlist from "../features/products/pages/Wishlist";
 import SellerOrders from "../features/products/pages/SellerOrders";
+import SellerAnalytics from "../features/products/pages/SellerAnalytics";
 
 export const routes = createBrowserRouter([
 
@@ -77,6 +78,12 @@ export const routes = createBrowserRouter([
                         path: "/seller/orders",
                         element: <Protected role="seller" >
                             <SellerOrders />
+                        </Protected>
+                    },
+                    {
+                        path: "/seller/analytics",
+                        element: <Protected role="seller" >
+                            <SellerAnalytics />
                         </Protected>
                     }
                 ]
