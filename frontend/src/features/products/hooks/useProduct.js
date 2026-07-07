@@ -13,10 +13,15 @@ export const useProduct = () => {
         return data.product
     }
 
-    async function handleGetSellerProduct() {
-        const data = await getSellerProduct()
+    async function handleGetSellerProduct(params = {}) {
+        const data = await getSellerProduct(params)
         dispatch(setSellerProducts(data.products))
-        return data.products
+        return {
+            products: data.products,
+            totalPages: data.totalPages,
+            currentPage: data.currentPage,
+            totalItems: data.totalItems
+        }
     }
 
     async function handleGetAllProducts(params = {}) {

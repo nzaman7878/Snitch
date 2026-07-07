@@ -12,9 +12,28 @@ const Dashboard = () => {
     const { socket, isConnected } = useSocket();
     const [sessionOrders, setSessionOrders] = useState(0);
 
+    const [page, setPage] = useState(1);
+    const [search, setSearch] = useState("");
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [isTyping, setIsTyping] = useState(false);
+
     useEffect(() => {
-        handleGetSellerProduct();
-    }, []);
+        const fetchProducts = async () => {
+            const result = await handleGetSellerProduct({ page, limit: 8, search });
+            if (result) {
+                setTotalPages(result.totalPages);
+                setTotalItems(result.totalItems);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            fetchProducts();
+            setIsTyping(false);
+        }, 500); // debounce search
+
+        return () => clearTimeout(timeoutId);
+    }, [page, search]);
 
     useEffect(() => {
         if (!socket) return;
@@ -103,7 +122,7 @@ const Dashboard = () => {
 
                             <button
                                 onClick={() => navigate('/seller/create-product')}
-                                className="py-4 px-8 text-[11px] uppercase tracking-[0.3em] font-medium transition-all duration-300 w-full md:w-auto text-center"
+                                className="py-4 px-8 text-[11px] uppercase tracking-[0.3em] font-medium transition-all duration-300 w-full md:w-auto text-center shrink-0"
                                 style={{
                                     backgroundColor: '#1b1c1a',
                                     color: '#fbf9f6',
@@ -120,6 +139,29 @@ const Dashboard = () => {
                             >
                                 New Listing
                             </button>
+                        </div>
+                    </div>
+
+                    {/* ── Filter / Search Bar ── */}
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+                        <div className="w-full md:w-1/3 relative">
+                            <input
+                                type="text"
+                                placeholder="Search inventory..."
+                                value={search}
+                                onChange={(e) => {
+                                    setSearch(e.target.value);
+                                    setPage(1);
+                                    setIsTyping(true);
+                                }}
+                                className="w-full bg-transparent border-b border-[#d0c5b5] py-2 pl-8 focus:outline-none focus:border-[#C9A96E] placeholder:text-[#d0c5b5] text-sm font-sans"
+                            />
+                            <svg className="w-4 h-4 text-[#d0c5b5] absolute left-1 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <div className="text-[#7A6E63] text-xs uppercase tracking-widest">
+                            {totalItems} {totalItems === 1 ? 'Item' : 'Items'} Found
                         </div>
                     </div>
 
@@ -177,10 +219,33 @@ const Dashboard = () => {
                         </div>
                     ) : (
                         <div className="py-24 text-center flex flex-col items-center">
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-medium mb-4" style={{ color: '#C9A96E' }}>Empty Vault</span>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-medium mb-4" style={{ color: '#C9A96E' }}>{search ? 'No Results' : 'Empty Vault'}</span>
                             <p className="max-w-md mx-auto text-lg leading-relaxed" style={{ fontFamily: "'Cormorant Garamond', serif", color: '#7A6E63' }}>
-                                You haven't added any curated pieces to your archive yet. Begin by creating a new listing.
+                                {search ? 'We couldn\'t find any listings matching your search.' : 'You haven\'t added any curated pieces to your archive yet. Begin by creating a new listing.'}
                             </p>
+                        </div>
+                    )}
+
+                    {/* ── Pagination ── */}
+                    {totalPages > 1 && (
+                        <div className="flex justify-center items-center gap-6 pb-24 border-t border-[#e5e1da] pt-10">
+                            <button 
+                                disabled={page === 1}
+                                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                                className={`text-xs uppercase tracking-[0.2em] font-medium transition-colors ${page === 1 ? 'text-[#d0c5b5] cursor-not-allowed' : 'text-[#1b1c1a] hover:text-[#C9A96E]'}`}
+                            >
+                                Previous
+                            </button>
+                            <span className="text-sm font-serif text-[#7A6E63]">
+                                Page {page} of {totalPages}
+                            </span>
+                            <button 
+                                disabled={page === totalPages}
+                                onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                                className={`text-xs uppercase tracking-[0.2em] font-medium transition-colors ${page === totalPages ? 'text-[#d0c5b5] cursor-not-allowed' : 'text-[#1b1c1a] hover:text-[#C9A96E]'}`}
+                            >
+                                Next
+                            </button>
                         </div>
                     )}
                 </div>

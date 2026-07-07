@@ -37,14 +37,34 @@ export async function createProduct(req, res) {
 
 export async function getSellerProducts(req, res) {
     const seller = req.user;
+    const { page = 1, limit = 10, search } = req.query;
 
-    const products = await productModel.find({ seller: seller._id });
+    const query = { seller: seller._id };
 
+    if (search) {
+        query.$or = [
+            { title: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } }
+        ];
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const products = await productModel.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit));
+
+    const totalItems = await productModel.countDocuments(query);
+    const totalPages = Math.ceil(totalItems / Number(limit));
 
     res.status(200).json({
         message: "Products fetched successfully",
         success: true,
-        products
+        products,
+        currentPage: Number(page),
+        totalPages,
+        totalItems
     })
 }
 
