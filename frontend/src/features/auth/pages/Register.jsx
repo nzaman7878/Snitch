@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from "../hook/useAuth";
 import { useNavigate } from 'react-router';
 import ContinueWithGoogle from '../components/ContinueWithGoogle';
+import toast from 'react-hot-toast';
 
 const Register = () => {
     const { handleRegister } = useAuth();
@@ -22,17 +23,23 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const data = await handleRegister({
-            email: formData.email,
-            contact: formData.contactNumber,
-            password: formData.password,
-            isSeller: formData.isSeller,
-            fullname: formData.fullName
-        });
-        if (data) {
-            navigate("/");
-        } else {
-            alert("Registration failed. Please check your inputs.");
+        try {
+            const data = await handleRegister({
+                email: formData.email,
+                contact: formData.contactNumber,
+                password: formData.password,
+                isSeller: formData.isSeller,
+                fullname: formData.fullName
+            });
+            if (data) {
+                toast.success("Registration successful!");
+                navigate("/");
+            } else {
+                toast.error("Registration failed. Please check your inputs.");
+            }
+        } catch (error) {
+            console.error("Registration failed", error);
+            toast.error(error?.response?.data?.message || "Registration failed. Please try again.");
         }
     };
 

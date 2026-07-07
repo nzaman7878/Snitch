@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from "../hook/useAuth";
 import { useNavigate } from "react-router";
 import ContinueWithGoogle from '../components/ContinueWithGoogle';
+import toast from 'react-hot-toast';
 
 const Login = () => {
     const { handleLogin } = useAuth();
@@ -22,12 +23,15 @@ const Login = () => {
         try {
             const user = await handleLogin({ email: formData.email, password: formData.password });
             if (user.role == "buyer") {
+                toast.success("Successfully logged in");
                 navigate("/");
             } else if (user.role == "seller") {
+                toast.success("Successfully logged in");
                 navigate("/seller/dashboard");
             }
         } catch (error) {
             console.error("Login failed", error);
+            toast.error(error?.response?.data?.message || "Login failed. Please check your credentials.");
         }
     };
 
