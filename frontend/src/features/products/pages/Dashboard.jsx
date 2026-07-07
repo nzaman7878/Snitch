@@ -67,26 +67,6 @@ const Dashboard = () => {
             >
                 <div className="max-w-7xl mx-auto px-8 lg:px-16 xl:px-24">
 
-                    {/* ── Top Bar ── */}
-                    <div className="pt-10 pb-0 flex items-center gap-5">
-                        <button
-                            onClick={() => navigate(-1)}
-                            className="text-lg transition-colors duration-200 leading-none"
-                            style={{ color: '#B5ADA3' }}
-                            aria-label="Go back"
-                            onMouseEnter={e => e.currentTarget.style.color = '#C9A96E'}
-                            onMouseLeave={e => e.currentTarget.style.color = '#B5ADA3'}
-                        >
-                            ←
-                        </button>
-                        <span
-                            className="text-xs font-medium tracking-[0.32em] uppercase"
-                            style={{ fontFamily: "'Cormorant Garamond', serif", color: '#C9A96E' }}
-                        >
-                            Snitch.
-                        </span>
-                    </div>
-
                     {/* ── Page Header ── */}
                     <div className="pt-10 pb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 overflow-hidden">
                         <div>
