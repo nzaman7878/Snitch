@@ -45,3 +45,18 @@ export async function addProductVariant(productId, newProductVariant) {
     return response.data
 
 }
+
+export async function deleteProduct(productId) {
+    const response = await productApiInstance.delete(`/${productId}`)
+    return response.data
+}
+
+export async function updateProduct(productId, productData) {
+    const response = await productApiInstance.put(`/${productId}`, productData)
+    return response.data
+}
+
+export async function updateVariantStock(productId, variantId, stock) {
+    const response = await productApiInstance.put(`/${productId}/variants/${variantId}/stock`, { stock })
+    return response.data
+}

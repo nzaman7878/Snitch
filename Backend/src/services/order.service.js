@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import paymentModel from "../models/payment.model.js";
 import productModel from "../models/product.model.js";
 import cartModel from "../models/cart.model.js";
+import orderModel from "../models/order.model.js";
 import { notifySeller } from "./socket.service.js";
 
 export const processSuccessfulPayment = async (orderId, razorpayPaymentId = null, razorpaySignature = null) => {
@@ -81,6 +82,25 @@ export const processSuccessfulPayment = async (orderId, razorpayPaymentId = null
                     }
                     sellerNotifications.get(sellerId).push(item);
                 }
+            }
+
+            // Create Order records for each seller
+            for (const [sellerId, items] of sellerNotifications.entries()) {
+                const newOrder = new orderModel({
+                    buyer: payment.user,
+                    seller: sellerId,
+                    paymentId: payment._id,
+                    items: items.map(item => ({
+                        product: item.productId,
+                        variant: item.variantId,
+                        title: item.title,
+                        quantity: item.quantity,
+                        price: item.price,
+                        images: item.images
+                    })),
+                    status: "Pending" // Assuming shipping address isn't in payment model for now
+                });
+                await newOrder.save();
             }
 
             // Emit notifications

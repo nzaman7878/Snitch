@@ -10,6 +10,7 @@ import { config } from "./config/config.js";
 import cartRouter from "./routes/cart.routes.js";
 import wishlistRouter from "./routes/wishlist.routes.js";
 import webhookRouter from "./routes/webhook.routes.js";
+import orderRouter from "./routes/order.routes.js";
 
 const app = express();
 
@@ -47,5 +48,6 @@ app.use("/api/products", productRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/wishlist", wishlistRouter);
 app.use("/api/webhooks", webhookRouter);
+app.use("/api/orders", orderRouter);
 
 export default app;

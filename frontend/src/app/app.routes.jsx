@@ -12,6 +12,7 @@ import AppLayout from "./Applayout";
 import OrderSuccess from "../features/cart/pages/OrderSuccess";
 import Profile from "../features/auth/pages/Profile";
 import Wishlist from "../features/products/pages/Wishlist";
+import SellerOrders from "../features/products/pages/SellerOrders";
 
 export const routes = createBrowserRouter([
 
@@ -70,6 +71,12 @@ export const routes = createBrowserRouter([
                         path: "/seller/product/:productId",
                         element: <Protected role="seller" >
                             <SellerProductDetails />
+                        </Protected>
+                    },
+                    {
+                        path: "/seller/orders",
+                        element: <Protected role="seller" >
+                            <SellerOrders />
                         </Protected>
                     }
                 ]

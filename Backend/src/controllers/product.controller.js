@@ -170,3 +170,75 @@ export async function addProductVariant(req, res) {
     })
 
 }
+
+export async function updateProduct(req, res) {
+    const { id } = req.params;
+    const { title, description, priceAmount, priceCurrency, category } = req.body;
+    
+    try {
+        const product = await productModel.findOneAndUpdate(
+            { _id: id, seller: req.user._id },
+            {
+                title,
+                description,
+                category: category || "Uncategorized",
+                "price.amount": priceAmount,
+                "price.currency": priceCurrency || "INR"
+            },
+            { new: true }
+        );
+
+        if (!product) {
+            return res.status(404).json({ message: "Product not found or unauthorized", success: false });
+        }
+
+        return res.status(200).json({ message: "Product updated successfully", success: true, product });
+    } catch (error) {
+        return res.status(500).json({ message: error.message, success: false });
+    }
+}
+
+export async function deleteProduct(req, res) {
+    const { id } = req.params;
+
+    try {
+        const product = await productModel.findOneAndDelete({ _id: id, seller: req.user._id });
+        
+        if (!product) {
+            return res.status(404).json({ message: "Product not found or unauthorized", success: false });
+        }
+
+        return res.status(200).json({ message: "Product deleted successfully", success: true });
+    } catch (error) {
+        return res.status(500).json({ message: error.message, success: false });
+    }
+}
+
+export async function updateVariantStock(req, res) {
+    const { productId, variantId } = req.params;
+    const { stock } = req.body;
+
+    try {
+        const product = await productModel.findOne({ _id: productId, seller: req.user._id });
+        if (!product) {
+            return res.status(404).json({ message: "Product not found or unauthorized", success: false });
+        }
+
+        const variant = product.variants.id(variantId);
+        if (!variant) {
+            return res.status(404).json({ message: "Variant not found", success: false });
+        }
+
+        variant.stock = Number(stock);
+        
+        // Let mongoose handle optimistic concurrency control via save
+        await product.save();
+
+        return res.status(200).json({ message: "Variant stock updated successfully", success: true, product });
+    } catch (error) {
+        if (error.name === 'VersionError') {
+            return res.status(409).json({ message: "Conflict: Stock was updated by another request. Please try again.", success: false });
+        }
+        return res.status(500).json({ message: error.message, success: false });
+    }
+}

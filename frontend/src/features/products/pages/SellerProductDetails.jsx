@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useProduct } from '../hooks/useProduct';
-import { useParams } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
+import toast from 'react-hot-toast';
 
 // Helper icons
 const PlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
@@ -24,7 +25,8 @@ const SellerProductDetails = () => {
   });
 
   const { productId } = useParams();
-  const { handleGetProductById, handleAddProductVariant } = useProduct();
+  const navigate = useNavigate();
+  const { handleGetProductById, handleAddProductVariant, handleDeleteProduct, handleUpdateVariantStock } = useProduct();
 
   async function fetchProductDetails() {
     setLoading(true);
@@ -50,8 +52,30 @@ const SellerProductDetails = () => {
   // Handlers for modifying existing variant stock natively
   const handleStockChange = (index, newStock) => {
     const updatedVariants = [ ...localVariants ];
-    updatedVariants[ index ] = { ...updatedVariants[ index ], stock: Number(newStock) };
+    updatedVariants[ index ] = { ...updatedVariants[ index ], stock: Number(newStock), _isDirty: true };
     setLocalVariants(updatedVariants);
+  };
+
+  const handleSaveStock = async (variantId, stock) => {
+    try {
+      await handleUpdateVariantStock(productId, variantId, stock);
+      toast.success("Stock updated successfully");
+      fetchProductDetails(); // Refresh to reset dirty state and get updated version
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update stock");
+    }
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
+      try {
+        await handleDeleteProduct(productId);
+        toast.success("Product deleted successfully");
+        navigate("/seller/dashboard");
+      } catch (err) {
+        toast.error("Failed to delete product");
+      }
+    }
   };
 
   // Handlers for New Variant Form
@@ -174,6 +198,12 @@ const SellerProductDetails = () => {
       {/* Top Banner / Header */}
       <header className="sticky top-0 z-10 bg-[#fbf9f6]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
         <h1 className="font-serif text-xl tracking-wide uppercase">{product.title?.substring(0, 20)}{product.title?.length > 20 ? '...' : ''}</h1>
+        <button 
+          onClick={confirmDeleteProduct}
+          className="text-[#ba1a1a] hover:text-[#ffdad6] hover:bg-[#ba1a1a] px-4 py-2 uppercase text-sm tracking-widest transition-colors flex items-center gap-2"
+        >
+          <TrashIcon /> Delete Product
+        </button>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 md:px-8 mt-8">
@@ -385,9 +415,9 @@ const SellerProductDetails = () => {
                   </div>
 
                   {/* Stock Management Row */}
-                  <div className="mt-auto border-t border-[#f5f3f0] bg-[#fbf9f6] flex items-center px-6 py-3 justify-between">
-                    <label className="text-sm text-[#6e6258] uppercase tracking-wider">Current Stock</label>
-                    <div className="flex items-center gap-2">
+                  <div className="mt-auto border-t border-[#f5f3f0] bg-[#fbf9f6] flex flex-col sm:flex-row items-center px-6 py-3 justify-between gap-4">
+                    <div className="flex items-center w-full justify-between sm:w-auto sm:justify-start gap-4">
+                      <label className="text-sm text-[#6e6258] uppercase tracking-wider">Current Stock</label>
                       <input
                         type="number"
                         value={variant.stock || 0}
@@ -395,6 +425,14 @@ const SellerProductDetails = () => {
                         className="w-20 bg-transparent border-b border-[#d0c5b5] py-1 text-right focus:outline-none focus:border-[#745a27] font-serif text-lg"
                       />
                     </div>
+                    {variant._isDirty && (
+                      <button
+                        onClick={() => handleSaveStock(variant._id, variant.stock)}
+                        className="w-full sm:w-auto bg-[#1b1c1a] text-[#ffffff] px-4 py-2 uppercase tracking-wider text-xs hover:bg-[#C9A96E] hover:text-[#1b1c1a] transition-colors cursor-pointer"
+                      >
+                        Save
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

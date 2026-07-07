@@ -82,15 +82,16 @@ const Dashboard = () => {
                         </div>
 
                         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                            <div 
-                                className="py-4 px-6 text-[11px] uppercase tracking-[0.3em] font-medium border border-[#C9A96E] text-[#C9A96E] bg-transparent text-center flex items-center justify-center gap-2"
+                            <button 
+                                onClick={() => navigate('/seller/orders')}
+                                className="py-4 px-6 text-[11px] uppercase tracking-[0.3em] font-medium border border-[#C9A96E] text-[#C9A96E] bg-transparent text-center flex items-center justify-center gap-2 cursor-pointer hover:bg-[#C9A96E]/10 transition-colors"
                                 style={{ fontFamily: "'Inter', sans-serif" }}
                             >
                                 <span>Recent Orders</span>
                                 <span className="bg-[#C9A96E] text-[#1b1c1a] px-2 py-0.5 rounded-full font-bold">
                                     {sessionOrders}
                                 </span>
-                            </div>
+                            </button>
 
                             <button
                                 onClick={() => navigate('/seller/create-product')}
