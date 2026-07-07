@@ -30,6 +30,9 @@ const SellerProductDetails = () => {
   const [ isEditingBase, setIsEditingBase ] = useState(false);
   const [ editBaseForm, setEditBaseForm ] = useState({});
 
+  const [ editingVariantId, setEditingVariantId ] = useState(null);
+  const [ editVariantForm, setEditVariantForm ] = useState({});
+
   const { productId } = useParams();
   const navigate = useNavigate();
   const { handleGetProductById, handleAddProductVariant, handleDeleteProduct, handleUpdateVariantStock, handleUpdateProduct, handleDeleteProductVariant } = useProduct();
@@ -129,6 +132,36 @@ const SellerProductDetails = () => {
           } catch(err) {
               toast.error("Failed to delete variant");
           }
+      }
+  };
+
+  const { handleUpdateProductVariant } = useProduct();
+
+  const handleEditVariantClick = (variant) => {
+      setEditingVariantId(variant._id);
+      setEditVariantForm({
+          size: variant.size || '',
+          color: variant.color || '',
+          sku: variant.sku || '',
+          priceAmount: variant.price?.amount || '',
+          stock: variant.stock || 0
+      });
+  };
+
+  const handleEditVariantChange = (e) => {
+      const { name, value } = e.target;
+      setEditVariantForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveVariantEdit = async () => {
+      try {
+          await handleUpdateProductVariant(productId, editingVariantId, editVariantForm);
+          toast.success("Variant updated successfully");
+          setEditingVariantId(null);
+          fetchProductDetails();
+      } catch (err) {
+          console.error("Variant Edit Error:", err);
+          toast.error(err.response?.data?.message || "Failed to update variant");
       }
   };
 
@@ -542,25 +575,59 @@ const SellerProductDetails = () => {
                     </div>
                     {/* Attributes */}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {variant.size && <span className="bg-[#1b1c1a] text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">Size: {variant.size}</span>}
-                        {variant.color && <span className="bg-[#f5f3f0] px-2 py-1 text-[10px] uppercase tracking-wider text-[#1b1c1a]">Color: {variant.color}</span>}
-                        {variant.sku && <span className="bg-[#f5f3f0] px-2 py-1 text-[10px] uppercase tracking-wider text-[#1b1c1a]">SKU: {variant.sku}</span>}
-                        
-                        {Object.entries(variant.attributes || {}).map(([ key, val ]) => (
-                          <span key={key} className="bg-[#f5f3f0] px-2 py-1 text-xs uppercase tracking-wider text-[#4d463a]">
-                            <span className="text-[#a8a094]">{key}:</span> {val}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex justify-between items-end">
-                          <div className="text-sm font-medium">
-                            {variant.price?.amount ? `${variant.price.amount} ${variant.price.currency}` : 'Base Price'}
+                      {editingVariantId === variant._id ? (
+                        <div className="space-y-2">
+                           <div className="grid grid-cols-2 gap-2">
+                               <div>
+                                  <label className="text-[10px] uppercase text-[#7A6E63] block">Size</label>
+                                  <input type="text" name="size" value={editVariantForm.size} onChange={handleEditVariantChange} className="w-full bg-transparent border-b border-[#d0c5b5] py-1 text-xs focus:outline-none" />
+                               </div>
+                               <div>
+                                  <label className="text-[10px] uppercase text-[#7A6E63] block">Color</label>
+                                  <input type="text" name="color" value={editVariantForm.color} onChange={handleEditVariantChange} className="w-full bg-transparent border-b border-[#d0c5b5] py-1 text-xs focus:outline-none" />
+                               </div>
+                               <div>
+                                  <label className="text-[10px] uppercase text-[#7A6E63] block">SKU</label>
+                                  <input type="text" name="sku" value={editVariantForm.sku} onChange={handleEditVariantChange} className="w-full bg-transparent border-b border-[#d0c5b5] py-1 text-xs focus:outline-none" />
+                               </div>
+                               <div>
+                                  <label className="text-[10px] uppercase text-[#7A6E63] block">Price</label>
+                                  <input type="number" name="priceAmount" value={editVariantForm.priceAmount} onChange={handleEditVariantChange} className="w-full bg-transparent border-b border-[#d0c5b5] py-1 text-xs focus:outline-none" />
+                               </div>
+                           </div>
+                           <div className="flex justify-end gap-2 mt-2">
+                               <button onClick={() => setEditingVariantId(null)} className="text-[10px] uppercase text-[#7A6E63] hover:text-[#1b1c1a]">Cancel</button>
+                               <button onClick={handleSaveVariantEdit} className="bg-[#1b1c1a] text-white px-2 py-1 text-[10px] uppercase hover:bg-[#C9A96E]">Save</button>
+                           </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {variant.size && <span className="bg-[#1b1c1a] text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">Size: {variant.size}</span>}
+                            {variant.color && <span className="bg-[#f5f3f0] px-2 py-1 text-[10px] uppercase tracking-wider text-[#1b1c1a]">Color: {variant.color}</span>}
+                            {variant.sku && <span className="bg-[#f5f3f0] px-2 py-1 text-[10px] uppercase tracking-wider text-[#1b1c1a]">SKU: {variant.sku}</span>}
+                            
+                            {Object.entries(variant.attributes || {}).map(([ key, val ]) => (
+                              <span key={key} className="bg-[#f5f3f0] px-2 py-1 text-xs uppercase tracking-wider text-[#4d463a]">
+                                <span className="text-[#a8a094]">{key}:</span> {val}
+                              </span>
+                            ))}
                           </div>
-                          <button onClick={() => handleRemoveVariant(variant._id)} className="text-[#ba1a1a] text-[10px] uppercase tracking-wider hover:underline flex items-center gap-1">
-                              <TrashIcon /> Remove
-                          </button>
-                      </div>
+                          <div className="flex justify-between items-end">
+                              <div className="text-sm font-medium">
+                                {variant.price?.amount ? `${variant.price.amount} ${variant.price.currency}` : 'Base Price'}
+                              </div>
+                              <div className="flex gap-3">
+                                  <button onClick={() => handleEditVariantClick(variant)} className="text-[#7A6E63] text-[10px] uppercase tracking-wider hover:underline">
+                                      Edit
+                                  </button>
+                                  <button onClick={() => handleRemoveVariant(variant._id)} className="text-[#ba1a1a] text-[10px] uppercase tracking-wider hover:underline flex items-center gap-1">
+                                      <TrashIcon /> Remove
+                                  </button>
+                              </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
