@@ -33,7 +33,9 @@ const ProductDetail = () => {
                 
                 if (fetchedProduct?.variants) {
                     fetchedProduct.variants = fetchedProduct.variants.map(v => {
-                        const attrs = v.attributes ? { ...v.attributes } : {};
+                        // The database `attributes` field is polluted with bad data (e.g., sizes as keys).
+                        // We will strictly construct the attributes map from the `size` and `color` fields.
+                        const attrs = {};
                         if (v.size) attrs['Size'] = v.size;
                         if (v.color) attrs['Color'] = v.color;
                         return { ...v, attributes: attrs };
