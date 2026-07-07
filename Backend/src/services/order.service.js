@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import paymentModel from "../models/payment.model.js";
 import productModel from "../models/product.model.js";
 import cartModel from "../models/cart.model.js";
+import { notifySeller } from "./socket.service.js";
 
 export const processSuccessfulPayment = async (orderId, razorpayPaymentId = null, razorpaySignature = null) => {
     const session = await mongoose.startSession();
@@ -65,6 +66,37 @@ export const processSuccessfulPayment = async (orderId, razorpayPaymentId = null
 
         await session.commitTransaction();
         session.endSession();
+
+        // After successful transaction, notify the sellers
+        try {
+            // Collect unique sellers for this order
+            const sellerNotifications = new Map(); // sellerId -> items
+            
+            for (const item of payment.orderItems) {
+                const product = await productModel.findById(item.productId);
+                if (product && product.seller) {
+                    const sellerId = product.seller.toString();
+                    if (!sellerNotifications.has(sellerId)) {
+                        sellerNotifications.set(sellerId, []);
+                    }
+                    sellerNotifications.get(sellerId).push(item);
+                }
+            }
+
+            // Emit notifications
+            for (const [sellerId, items] of sellerNotifications.entries()) {
+                notifySeller(sellerId, {
+                    type: "new_order",
+                    message: "You have received a new order!",
+                    orderId: payment._id,
+                    items: items.map(i => i.title)
+                });
+            }
+        } catch (notificationError) {
+            console.error("Failed to send seller notifications:", notificationError);
+            // Non-blocking error, we don't revert payment for this
+        }
+
         return { message: "Payment processed successfully", payment };
 
     } catch (error) {

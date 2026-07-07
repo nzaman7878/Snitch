@@ -1,16 +1,38 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useProduct } from '../hooks/useProduct';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
+import { useSocket } from '../../Shared/hooks/useSocket';
+import toast from 'react-hot-toast';
 
 const Dashboard = () => {
     const { handleGetSellerProduct } = useProduct();
     const sellerProducts = useSelector(state => state.product.sellerProducts);
     const navigate = useNavigate();
+    const { socket, isConnected } = useSocket();
+    const [sessionOrders, setSessionOrders] = useState(0);
 
     useEffect(() => {
         handleGetSellerProduct();
     }, []);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewOrder = (data) => {
+            setSessionOrders(prev => prev + 1);
+            toast.success(
+                `New Order Received!\n${data.items ? data.items.join(', ') : ''}`,
+                { duration: 5000 }
+            );
+        };
+
+        socket.on('new_order', handleNewOrder);
+
+        return () => {
+            socket.off('new_order', handleNewOrder);
+        };
+    }, [socket]);
 
     return (
         <>
@@ -59,25 +81,37 @@ const Dashboard = () => {
                             <div className="mt-4 w-14 h-px" style={{ backgroundColor: '#C9A96E' }} />
                         </div>
 
-                        <button
-                            onClick={() => navigate('/seller/create-product')}
-                            className="py-4 px-8 text-[11px] uppercase tracking-[0.3em] font-medium transition-all duration-300 w-full md:w-auto text-center"
-                            style={{
-                                backgroundColor: '#1b1c1a',
-                                color: '#fbf9f6',
-                                fontFamily: "'Inter', sans-serif"
-                            }}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.backgroundColor = '#C9A96E';
-                                e.currentTarget.style.color = '#1b1c1a';
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.backgroundColor = '#1b1c1a';
-                                e.currentTarget.style.color = '#fbf9f6';
-                            }}
-                        >
-                            New Listing
-                        </button>
+                        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                            <div 
+                                className="py-4 px-6 text-[11px] uppercase tracking-[0.3em] font-medium border border-[#C9A96E] text-[#C9A96E] bg-transparent text-center flex items-center justify-center gap-2"
+                                style={{ fontFamily: "'Inter', sans-serif" }}
+                            >
+                                <span>Recent Orders</span>
+                                <span className="bg-[#C9A96E] text-[#1b1c1a] px-2 py-0.5 rounded-full font-bold">
+                                    {sessionOrders}
+                                </span>
+                            </div>
+
+                            <button
+                                onClick={() => navigate('/seller/create-product')}
+                                className="py-4 px-8 text-[11px] uppercase tracking-[0.3em] font-medium transition-all duration-300 w-full md:w-auto text-center"
+                                style={{
+                                    backgroundColor: '#1b1c1a',
+                                    color: '#fbf9f6',
+                                    fontFamily: "'Inter', sans-serif"
+                                }}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.backgroundColor = '#C9A96E';
+                                    e.currentTarget.style.color = '#1b1c1a';
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.backgroundColor = '#1b1c1a';
+                                    e.currentTarget.style.color = '#fbf9f6';
+                                }}
+                            >
+                                New Listing
+                            </button>
+                        </div>
                     </div>
 
                     {/* ── Product Grid ── */}
