@@ -19,6 +19,22 @@ const productSchema = new mongoose.Schema({
         type: String,
         default: "Uncategorized"
     },
+    collections: {
+        type: [String],
+        default: []
+    },
+    brand: {
+        type: String,
+        default: ""
+    },
+    discount: {
+        type: Number,
+        default: 0
+    },
+    stock: {
+        type: Number,
+        default: 0
+    },
     price: {
         type: priceSchema,
         required: true
@@ -44,6 +60,18 @@ const productSchema = new mongoose.Schema({
             stock: {
                 type: Number,
                 default: 0
+            },
+            size: {
+                type: String,
+                default: ""
+            },
+            color: {
+                type: String,
+                default: ""
+            },
+            sku: {
+                type: String,
+                default: ""
             },
             attributes: {
                 type: Map,

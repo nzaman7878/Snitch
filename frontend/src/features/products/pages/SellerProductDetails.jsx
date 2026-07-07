@@ -20,9 +20,15 @@ const SellerProductDetails = () => {
   const [ newVariant, setNewVariant ] = useState({
     images: [],
     stock: 0,
-    attributes: {}, // Strictly an object
+    size: '',
+    color: '',
+    sku: '',
+    attributes: {}, // For extra/custom fields
     price: { amount: '', currency: 'INR' }
   });
+
+  const [ isEditingBase, setIsEditingBase ] = useState(false);
+  const [ editBaseForm, setEditBaseForm ] = useState({});
 
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -38,6 +44,17 @@ const SellerProductDetails = () => {
       if (prod?.variants) {
         setLocalVariants(prod.variants);
       }
+      setEditBaseForm({
+        title: prod.title || '',
+        description: prod.description || '',
+        brand: prod.brand || '',
+        category: prod.category || '',
+        discount: prod.discount || 0,
+        stock: prod.stock || 0,
+        priceAmount: prod.price?.amount || '',
+        priceCurrency: prod.price?.currency || 'INR',
+        collections: prod.collections || []
+      });
     } catch (error) {
       console.error("Failed to fetch product details", error);
     } finally {
@@ -78,6 +95,44 @@ const SellerProductDetails = () => {
     }
   };
 
+  const handleBaseEditChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    if (name === 'collections') {
+      setEditBaseForm(prev => {
+        const current = prev.collections;
+        if (checked) return { ...prev, collections: [...current, value] };
+        return { ...prev, collections: current.filter(c => c !== value) };
+      });
+    } else {
+      setEditBaseForm(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleSaveBaseEdit = async () => {
+    try {
+      await handleUpdateProduct(productId, editBaseForm);
+      toast.success("Product updated successfully");
+      setIsEditingBase(false);
+      fetchProductDetails();
+    } catch (err) {
+      toast.error("Failed to update product details");
+    }
+  };
+
+  const { handleDeleteProductVariant } = useProduct();
+
+  const handleRemoveVariant = async (variantId) => {
+      if(window.confirm("Are you sure you want to delete this variant?")) {
+          try {
+              await handleDeleteProductVariant(productId, variantId);
+              toast.success("Variant deleted successfully");
+              fetchProductDetails();
+          } catch(err) {
+              toast.error("Failed to delete variant");
+          }
+      }
+  };
+
   // Handlers for New Variant Form
   const handleAddNewVariant = async () => {
     // Validate required at least one attribute to be filled
@@ -96,6 +151,9 @@ const SellerProductDetails = () => {
     const variantToSave = {
       images: cleanImages,
       stock: Number(newVariant.stock),
+      size: newVariant.size,
+      color: newVariant.color,
+      sku: newVariant.sku,
       attributes: cleanAttributes,
       price: newVariant.price.amount
         ? Number(newVariant.price.amount)
@@ -113,6 +171,9 @@ const SellerProductDetails = () => {
     setNewVariant({
       images: [],
       stock: 0,
+      size: '',
+      color: '',
+      sku: '',
       attributes: {},
       price: { amount: '', currency: 'INR' }
     });
@@ -230,11 +291,76 @@ const SellerProductDetails = () => {
           </div>
 
           <div className="w-full md:w-1/2 flex flex-col justify-center">
-            <h2 className="font-serif text-4xl md:text-5xl leading-tight mb-4 uppercase">{product.title}</h2>
-            <p className="text-[#6e6258] text-lg mb-6 leading-relaxed max-w-md">{product.description}</p>
-            <div className="text-2xl tracking-wide font-light mb-8">
-              {product.price?.amount} {product.price?.currency}
-            </div>
+            {isEditingBase ? (
+              <div className="bg-[#ffffff] p-6 shadow-sm border border-[#f5f3f0] space-y-4">
+                 <div>
+                    <label className="text-[10px] uppercase tracking-widest text-[#7A6E63] mb-1 block">Title</label>
+                    <input type="text" name="title" value={editBaseForm.title} onChange={handleBaseEditChange} className="w-full bg-transparent border-b border-[#d0c5b5] py-2 focus:outline-none focus:border-[#745a27]" />
+                 </div>
+                 <div>
+                    <label className="text-[10px] uppercase tracking-widest text-[#7A6E63] mb-1 block">Description</label>
+                    <textarea name="description" value={editBaseForm.description} onChange={handleBaseEditChange} className="w-full bg-transparent border-b border-[#d0c5b5] py-2 focus:outline-none focus:border-[#745a27] resize-none" rows="2" />
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-[10px] uppercase tracking-widest text-[#7A6E63] mb-1 block">Brand</label>
+                        <input type="text" name="brand" value={editBaseForm.brand} onChange={handleBaseEditChange} className="w-full bg-transparent border-b border-[#d0c5b5] py-2 focus:outline-none focus:border-[#745a27]" />
+                    </div>
+                    <div>
+                        <label className="text-[10px] uppercase tracking-widest text-[#7A6E63] mb-1 block">Category</label>
+                        <input type="text" name="category" value={editBaseForm.category} onChange={handleBaseEditChange} className="w-full bg-transparent border-b border-[#d0c5b5] py-2 focus:outline-none focus:border-[#745a27]" />
+                    </div>
+                    <div>
+                        <label className="text-[10px] uppercase tracking-widest text-[#7A6E63] mb-1 block">Price</label>
+                        <input type="number" name="priceAmount" value={editBaseForm.priceAmount} onChange={handleBaseEditChange} className="w-full bg-transparent border-b border-[#d0c5b5] py-2 focus:outline-none focus:border-[#745a27]" />
+                    </div>
+                    <div>
+                        <label className="text-[10px] uppercase tracking-widest text-[#7A6E63] mb-1 block">Discount (%)</label>
+                        <input type="number" name="discount" value={editBaseForm.discount} onChange={handleBaseEditChange} className="w-full bg-transparent border-b border-[#d0c5b5] py-2 focus:outline-none focus:border-[#745a27]" />
+                    </div>
+                 </div>
+                 <div>
+                    <label className="text-[10px] uppercase tracking-widest text-[#7A6E63] mb-2 block">Collections</label>
+                    <div className="flex flex-wrap gap-3">
+                        {["Men's Collection", "Women's Collection", "New Arrivals", "Best Sellers", "Best Offers"].map(c => (
+                            <label key={c} className="flex items-center gap-1 text-xs">
+                                <input type="checkbox" name="collections" value={c} checked={editBaseForm.collections.includes(c)} onChange={handleBaseEditChange} className="w-3 h-3 text-[#C9A96E]" /> {c}
+                            </label>
+                        ))}
+                    </div>
+                 </div>
+                 <div className="flex justify-end gap-3 mt-4">
+                    <button onClick={() => setIsEditingBase(false)} className="text-xs uppercase tracking-wider text-[#7A6E63] hover:text-[#1b1c1a]">Cancel</button>
+                    <button onClick={handleSaveBaseEdit} className="bg-[#1b1c1a] text-white px-4 py-2 text-xs uppercase tracking-wider hover:bg-[#C9A96E] transition-colors">Save Details</button>
+                 </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-start mb-4">
+                    <h2 className="font-serif text-4xl md:text-5xl leading-tight uppercase">{product.title}</h2>
+                    <button onClick={() => setIsEditingBase(true)} className="text-xs uppercase tracking-widest text-[#7A6E63] hover:text-[#C9A96E] underline underline-offset-4">Edit Details</button>
+                </div>
+                
+                {product.brand && <p className="text-sm uppercase tracking-widest text-[#7A6E63] mb-2">{product.brand}</p>}
+                
+                <p className="text-[#6e6258] text-lg mb-4 leading-relaxed max-w-md">{product.description}</p>
+                
+                <div className="flex items-end gap-3 mb-6">
+                    <div className="text-2xl tracking-wide font-light">
+                    {product.price?.amount} {product.price?.currency}
+                    </div>
+                    {product.discount > 0 && <span className="text-[#ba1a1a] text-sm mb-1 font-medium">-{product.discount}% OFF</span>}
+                </div>
+
+                {product.collections && product.collections.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        {product.collections.map(c => (
+                            <span key={c} className="bg-[#f5f3f0] px-2 py-1 text-[10px] uppercase tracking-wider text-[#7A6E63]">{c}</span>
+                        ))}
+                    </div>
+                )}
+              </>
+            )}
           </div>
         </section>
 
@@ -268,6 +394,22 @@ const SellerProductDetails = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Form Left Col: Attributes & Basics */}
                 <div className="space-y-6">
+
+                  {/* Standard Variants (Size, Color, SKU) */}
+                  <div className="grid grid-cols-3 gap-4">
+                      <div>
+                          <label className="block text-[10px] uppercase tracking-wider text-[#6e6258] mb-1">Size</label>
+                          <input type="text" value={newVariant.size} onChange={e => setNewVariant({...newVariant, size: e.target.value})} placeholder="e.g. L" className="w-full bg-transparent border-b border-[#d0c5b5] py-2 focus:outline-none focus:border-[#745a27]" />
+                      </div>
+                      <div>
+                          <label className="block text-[10px] uppercase tracking-wider text-[#6e6258] mb-1">Color</label>
+                          <input type="text" value={newVariant.color} onChange={e => setNewVariant({...newVariant, color: e.target.value})} placeholder="e.g. Navy" className="w-full bg-transparent border-b border-[#d0c5b5] py-2 focus:outline-none focus:border-[#745a27]" />
+                      </div>
+                      <div>
+                          <label className="block text-[10px] uppercase tracking-wider text-[#6e6258] mb-1">SKU</label>
+                          <input type="text" value={newVariant.sku} onChange={e => setNewVariant({...newVariant, sku: e.target.value})} placeholder="Optional" className="w-full bg-transparent border-b border-[#d0c5b5] py-2 focus:outline-none focus:border-[#745a27]" />
+                      </div>
+                  </div>
 
                   {/* Dynamic Attributes */}
                   <div>
@@ -400,16 +542,25 @@ const SellerProductDetails = () => {
                       )}
                     </div>
                     {/* Attributes */}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div className="flex flex-wrap gap-2 mb-2">
+                        {variant.size && <span className="bg-[#1b1c1a] text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">Size: {variant.size}</span>}
+                        {variant.color && <span className="bg-[#f5f3f0] px-2 py-1 text-[10px] uppercase tracking-wider text-[#1b1c1a]">Color: {variant.color}</span>}
+                        {variant.sku && <span className="bg-[#f5f3f0] px-2 py-1 text-[10px] uppercase tracking-wider text-[#1b1c1a]">SKU: {variant.sku}</span>}
+                        
                         {Object.entries(variant.attributes || {}).map(([ key, val ]) => (
                           <span key={key} className="bg-[#f5f3f0] px-2 py-1 text-xs uppercase tracking-wider text-[#4d463a]">
                             <span className="text-[#a8a094]">{key}:</span> {val}
                           </span>
                         ))}
                       </div>
-                      <div className="text-sm font-light">
-                        {variant.price?.amount ? `${variant.price.amount} ${variant.price.currency}` : 'Base Price'}
+                      <div className="flex justify-between items-end">
+                          <div className="text-sm font-medium">
+                            {variant.price?.amount ? `${variant.price.amount} ${variant.price.currency}` : 'Base Price'}
+                          </div>
+                          <button onClick={() => handleRemoveVariant(variant._id)} className="text-[#ba1a1a] text-[10px] uppercase tracking-wider hover:underline flex items-center gap-1">
+                              <TrashIcon /> Remove
+                          </button>
                       </div>
                     </div>
                   </div>

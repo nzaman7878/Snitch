@@ -10,14 +10,30 @@ const CreateProduct = () => {
         title: '',
         description: '',
         priceAmount: '',
-        priceCurrency: 'INR'
+        priceCurrency: 'INR',
+        brand: '',
+        discount: 0,
+        stock: 0,
+        collections: []
     });
     const [images, setImages] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        
+        if (name === 'collections') {
+            setFormData(prev => {
+                const currentCollections = prev.collections;
+                if (checked) {
+                    return { ...prev, collections: [...currentCollections, value] };
+                } else {
+                    return { ...prev, collections: currentCollections.filter(c => c !== value) };
+                }
+            });
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleImageChange = (e) => {
@@ -37,6 +53,10 @@ const CreateProduct = () => {
             data.append('description', formData.description);
             data.append('priceAmount', formData.priceAmount);
             data.append('priceCurrency', formData.priceCurrency);
+            data.append('brand', formData.brand);
+            data.append('discount', formData.discount);
+            data.append('stock', formData.stock);
+            data.append('collections', JSON.stringify(formData.collections));
             
             images.forEach(image => {
                 data.append('images', image);
@@ -159,29 +179,123 @@ const CreateProduct = () => {
                             />
                         </div>
 
-                        {/* Price */}
+                        {/* Brand */}
                         <div className="flex flex-col gap-2">
                             <label
-                                htmlFor="prod-price"
+                                htmlFor="prod-brand"
                                 className="text-[10px] uppercase tracking-[0.18em] font-medium"
                                 style={{ color: '#7A6E63' }}
                             >
-                                Price (INR)
+                                Brand
                             </label>
                             <input
-                                id="prod-price"
-                                type="number"
-                                name="priceAmount"
-                                value={formData.priceAmount}
+                                id="prod-brand"
+                                type="text"
+                                name="brand"
+                                value={formData.brand}
                                 onChange={handleChange}
-                                required
-                                min="0"
-                                placeholder="e.g. 2999"
+                                placeholder="e.g. Snitch"
                                 className="w-full bg-transparent outline-none py-3 text-sm transition-colors duration-300"
                                 style={inputStyle}
                                 onFocus={handleFocus}
                                 onBlur={handleBlur}
                             />
+                        </div>
+
+                        {/* Collections */}
+                        <div className="flex flex-col gap-3">
+                            <label className="text-[10px] uppercase tracking-[0.18em] font-medium" style={{ color: '#7A6E63' }}>
+                                Collections
+                            </label>
+                            <div className="flex flex-wrap gap-4">
+                                {["Men's Collection", "Women's Collection", "New Arrivals", "Best Sellers", "Best Offers"].map(collection => (
+                                    <label key={collection} className="flex items-center gap-2 text-sm text-[#1b1c1a] cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            name="collections"
+                                            value={collection}
+                                            checked={formData.collections.includes(collection)}
+                                            onChange={handleChange}
+                                            className="w-4 h-4 text-[#C9A96E] bg-gray-100 border-gray-300 rounded focus:ring-[#C9A96E] focus:ring-2 cursor-pointer"
+                                        />
+                                        {collection}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Price, Discount, Base Stock Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="flex flex-col gap-2">
+                                <label
+                                    htmlFor="prod-price"
+                                    className="text-[10px] uppercase tracking-[0.18em] font-medium"
+                                    style={{ color: '#7A6E63' }}
+                                >
+                                    Price (INR)
+                                </label>
+                                <input
+                                    id="prod-price"
+                                    type="number"
+                                    name="priceAmount"
+                                    value={formData.priceAmount}
+                                    onChange={handleChange}
+                                    required
+                                    min="0"
+                                    placeholder="e.g. 2999"
+                                    className="w-full bg-transparent outline-none py-3 text-sm transition-colors duration-300"
+                                    style={inputStyle}
+                                    onFocus={handleFocus}
+                                    onBlur={handleBlur}
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <label
+                                    htmlFor="prod-discount"
+                                    className="text-[10px] uppercase tracking-[0.18em] font-medium"
+                                    style={{ color: '#7A6E63' }}
+                                >
+                                    Discount (%)
+                                </label>
+                                <input
+                                    id="prod-discount"
+                                    type="number"
+                                    name="discount"
+                                    value={formData.discount}
+                                    onChange={handleChange}
+                                    min="0"
+                                    max="100"
+                                    placeholder="e.g. 15"
+                                    className="w-full bg-transparent outline-none py-3 text-sm transition-colors duration-300"
+                                    style={inputStyle}
+                                    onFocus={handleFocus}
+                                    onBlur={handleBlur}
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <label
+                                    htmlFor="prod-stock"
+                                    className="text-[10px] uppercase tracking-[0.18em] font-medium"
+                                    style={{ color: '#7A6E63' }}
+                                >
+                                    Base Stock
+                                </label>
+                                <input
+                                    id="prod-stock"
+                                    type="number"
+                                    name="stock"
+                                    value={formData.stock}
+                                    onChange={handleChange}
+                                    min="0"
+                                    placeholder="e.g. 50"
+                                    className="w-full bg-transparent outline-none py-3 text-sm transition-colors duration-300"
+                                    style={inputStyle}
+                                    onFocus={handleFocus}
+                                    onBlur={handleBlur}
+                                />
+                            </div>
                         </div>
 
                         {/* Images */}

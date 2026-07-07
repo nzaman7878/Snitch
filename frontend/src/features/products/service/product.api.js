@@ -38,6 +38,11 @@ export async function addProductVariant(productId, newProductVariant) {
 
     formData.append("stock", newProductVariant.stock)
     formData.append("priceAmount", newProductVariant.price)
+    
+    if (newProductVariant.size) formData.append("size", newProductVariant.size)
+    if (newProductVariant.color) formData.append("color", newProductVariant.color)
+    if (newProductVariant.sku) formData.append("sku", newProductVariant.sku)
+    
     formData.append("attributes", JSON.stringify(newProductVariant.attributes))
 
     const response = await productApiInstance.post(`/${productId}/variants`, formData)
@@ -58,5 +63,15 @@ export async function updateProduct(productId, productData) {
 
 export async function updateVariantStock(productId, variantId, stock) {
     const response = await productApiInstance.put(`/${productId}/variants/${variantId}/stock`, { stock })
+    return response.data
+}
+
+export async function deleteProductVariant(productId, variantId) {
+    const response = await productApiInstance.delete(`/${productId}/variants/${variantId}`)
+    return response.data
+}
+
+export async function updateProductVariant(productId, variantId, variantData) {
+    const response = await productApiInstance.put(`/${productId}/variants/${variantId}`, variantData)
     return response.data
 }

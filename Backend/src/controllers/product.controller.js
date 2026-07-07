@@ -4,7 +4,7 @@ import { uploadFile } from "../services/storage.service.js";
 
 export async function createProduct(req, res) {
 
-    const { title, description, priceAmount, priceCurrency, category } = req.body;
+    const { title, description, priceAmount, priceCurrency, category, brand, discount, stock, collections } = req.body;
     const seller = req.user;
 
     const images = await Promise.all(req.files.map(async (file) => {
@@ -23,6 +23,10 @@ export async function createProduct(req, res) {
             currency: priceCurrency || "INR"
         },
         category: category || "Uncategorized",
+        collections: collections ? JSON.parse(collections) : [],
+        brand: brand || "",
+        discount: discount ? Number(discount) : 0,
+        stock: stock ? Number(stock) : 0,
         images,
         seller: seller._id
     })
@@ -167,6 +171,9 @@ export async function addProductVariant(req, res) {
 
     const price = req.body.priceAmount
     const stock = req.body.stock
+    const size = req.body.size || ""
+    const color = req.body.color || ""
+    const sku = req.body.sku || ""
     const attributes = JSON.parse(req.body.attributes || "{}")
 
     console.log(price)
@@ -178,6 +185,9 @@ export async function addProductVariant(req, res) {
             currency: req.body.priceCurrency || product.price.currency
         },
         stock,
+        size,
+        color,
+        sku,
         attributes
     })
 
@@ -193,7 +203,7 @@ export async function addProductVariant(req, res) {
 
 export async function updateProduct(req, res) {
     const { id } = req.params;
-    const { title, description, priceAmount, priceCurrency, category } = req.body;
+    const { title, description, priceAmount, priceCurrency, category, brand, discount, stock, collections } = req.body;
     
     try {
         const product = await productModel.findOneAndUpdate(
@@ -202,6 +212,10 @@ export async function updateProduct(req, res) {
                 title,
                 description,
                 category: category || "Uncategorized",
+                collections: collections || [],
+                brand: brand || "",
+                discount: discount ? Number(discount) : 0,
+                stock: stock ? Number(stock) : 0,
                 "price.amount": priceAmount,
                 "price.currency": priceCurrency || "INR"
             },
@@ -259,6 +273,63 @@ export async function updateVariantStock(req, res) {
         if (error.name === 'VersionError') {
             return res.status(409).json({ message: "Conflict: Stock was updated by another request. Please try again.", success: false });
         }
+        return res.status(500).json({ message: error.message, success: false });
+    }
+}
+
+export async function deleteProductVariant(req, res) {
+    const { productId, variantId } = req.params;
+
+    try {
+        const product = await productModel.findOne({ _id: productId, seller: req.user._id });
+        if (!product) {
+            return res.status(404).json({ message: "Product not found or unauthorized", success: false });
+        }
+
+        const variant = product.variants.id(variantId);
+        if (!variant) {
+            return res.status(404).json({ message: "Variant not found", success: false });
+        }
+
+        product.variants.pull(variantId);
+        await product.save();
+
+        return res.status(200).json({ message: "Variant deleted successfully", success: true, product });
+    } catch (error) {
+        return res.status(500).json({ message: error.message, success: false });
+    }
+}
+
+export async function updateProductVariant(req, res) {
+    const { productId, variantId } = req.params;
+    const { stock, priceAmount, priceCurrency, size, color, sku, attributes } = req.body;
+
+    try {
+        const product = await productModel.findOne({ _id: productId, seller: req.user._id });
+        if (!product) {
+            return res.status(404).json({ message: "Product not found or unauthorized", success: false });
+        }
+
+        const variant = product.variants.id(variantId);
+        if (!variant) {
+            return res.status(404).json({ message: "Variant not found", success: false });
+        }
+
+        if (stock !== undefined) variant.stock = Number(stock);
+        if (size !== undefined) variant.size = size;
+        if (color !== undefined) variant.color = color;
+        if (sku !== undefined) variant.sku = sku;
+        if (priceAmount !== undefined) variant.price.amount = Number(priceAmount);
+        if (priceCurrency !== undefined) variant.price.currency = priceCurrency;
+        
+        if (attributes !== undefined) {
+            variant.attributes = typeof attributes === 'string' ? JSON.parse(attributes) : attributes;
+        }
+
+        await product.save();
+
+        return res.status(200).json({ message: "Variant updated successfully", success: true, product });
+    } catch (error) {
         return res.status(500).json({ message: error.message, success: false });
     }
 }

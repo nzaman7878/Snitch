@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticateSeller } from '../middlewares/auth.middleware.js';
-import { createProduct, getAllProducts, getSellerProducts, getProductDetails, addProductVariant, updateProduct, deleteProduct, updateVariantStock } from '../controllers/product.controller.js';
+import { createProduct, getAllProducts, getSellerProducts, getProductDetails, addProductVariant, updateProduct, deleteProduct, updateVariantStock, deleteProductVariant, updateProductVariant } from '../controllers/product.controller.js';
 import multer from "multer";
 import { createProductValidator } from '../validator/product.validator.js';
 
@@ -78,5 +78,21 @@ router.delete("/:id", authenticateSeller, deleteProduct)
  * @access Private (Seller only)
  */
 router.put("/:productId/variants/:variantId/stock", authenticateSeller, updateVariantStock)
+
+
+/**
+ * @route DELETE /api/products/:productId/variants/:variantId
+ * @description Delete a specific variant
+ * @access Private (Seller only)
+ */
+router.delete("/:productId/variants/:variantId", authenticateSeller, deleteProductVariant)
+
+
+/**
+ * @route PUT /api/products/:productId/variants/:variantId
+ * @description Update a specific variant
+ * @access Private (Seller only)
+ */
+router.put("/:productId/variants/:variantId", authenticateSeller, updateProductVariant)
 
 export default router;
