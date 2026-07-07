@@ -32,7 +32,7 @@ const SellerProductDetails = () => {
 
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { handleGetProductById, handleAddProductVariant, handleDeleteProduct, handleUpdateVariantStock } = useProduct();
+  const { handleGetProductById, handleAddProductVariant, handleDeleteProduct, handleUpdateVariantStock, handleUpdateProduct, handleDeleteProductVariant } = useProduct();
 
   async function fetchProductDetails() {
     setLoading(true);
@@ -115,11 +115,10 @@ const SellerProductDetails = () => {
       setIsEditingBase(false);
       fetchProductDetails();
     } catch (err) {
-      toast.error("Failed to update product details");
+      console.error("Update Product Error:", err);
+      toast.error(err.response?.data?.message || "Failed to update product details");
     }
   };
-
-  const { handleDeleteProductVariant } = useProduct();
 
   const handleRemoveVariant = async (variantId) => {
       if(window.confirm("Are you sure you want to delete this variant?")) {

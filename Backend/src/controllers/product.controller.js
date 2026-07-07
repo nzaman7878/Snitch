@@ -216,7 +216,7 @@ export async function updateProduct(req, res) {
                 brand: brand || "",
                 discount: discount ? Number(discount) : 0,
                 stock: stock ? Number(stock) : 0,
-                "price.amount": priceAmount,
+                "price.amount": priceAmount ? Number(priceAmount) : 0,
                 "price.currency": priceCurrency || "INR"
             },
             { new: true }
@@ -228,6 +228,7 @@ export async function updateProduct(req, res) {
 
         return res.status(200).json({ message: "Product updated successfully", success: true, product });
     } catch (error) {
+        console.error("Error updating product:", error);
         return res.status(500).json({ message: error.message, success: false });
     }
 }
