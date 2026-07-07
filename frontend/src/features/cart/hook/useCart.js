@@ -1,13 +1,20 @@
 import { addItem, getCart, incrementCartItemApi, decrementCartItemApi, removeCartItemApi, createCartOrder, verifyCartOrder } from "../service/cart.api"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { setCart, incrementCartItem, decrementCartItem, removeCartItemState } from "../state/cart.slice"
+import toast from "react-hot-toast"
 
 
 export const useCart = () => {
 
     const dispatch = useDispatch()
+    const user = useSelector(state => state.auth?.user)
 
     async function handleAddItem({ productId, variantId }) {
+        if (!user) {
+            toast.error("log in first")
+            return null
+        }
+        
         const data = await addItem({ productId, variantId })
 
         return data

@@ -7,9 +7,9 @@ import toast from 'react-hot-toast';
 
 const ProductDetail = () => {
     const { productId } = useParams();
-    const [ product, setProduct ] = useState(null);
-    const [ selectedImage, setSelectedImage ] = useState(0);
-    const [ selectedAttributes, setSelectedAttributes ] = useState({});
+    const [product, setProduct] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(0);
+    const [selectedAttributes, setSelectedAttributes] = useState({});
     const navigate = useNavigate();
     const { handleGetProductById } = useProduct();
     const { handleAddItem } = useCart();
@@ -30,13 +30,13 @@ const ProductDetail = () => {
 
     useEffect(() => {
         fetchProductDetails();
-    }, [ productId ]);
+    }, [productId]);
 
     useEffect(() => {
         if (product?.variants?.length > 0) {
-            setSelectedAttributes(product.variants[ 0 ].attributes || {});
+            setSelectedAttributes(product.variants[0].attributes || {});
         }
-    }, [ product ]);
+    }, [product]);
 
     const activeVariant = useMemo(() => {
         if (!product?.variants || product.variants.length === 0) return null;
@@ -44,12 +44,12 @@ const ProductDetail = () => {
             if (!v.attributes) return false;
             const vKeys = Object.keys(v.attributes);
             const sKeys = Object.keys(selectedAttributes);
-            const isMatch = vKeys.every(k => v.attributes[ k ] === selectedAttributes[ k ]);
+            const isMatch = vKeys.every(k => v.attributes[k] === selectedAttributes[k]);
             // If they don't have exactly the same keys, they shouldn't perfectly match, 
             // but we might only care about matching what's available.
             return vKeys.length === sKeys.length && isMatch;
         });
-    }, [ product, selectedAttributes ]);
+    }, [product, selectedAttributes]);
 
 
     console.log({ product, activeVariant })
@@ -59,37 +59,37 @@ const ProductDetail = () => {
         const attrs = {};
         product.variants.forEach(variant => {
             if (variant.attributes) {
-                Object.entries(variant.attributes).forEach(([ key, value ]) => {
-                    if (!attrs[ key ]) attrs[ key ] = new Set();
-                    attrs[ key ].add(value);
+                Object.entries(variant.attributes).forEach(([key, value]) => {
+                    if (!attrs[key]) attrs[key] = new Set();
+                    attrs[key].add(value);
                 });
             }
         });
         Object.keys(attrs).forEach(key => {
-            attrs[ key ] = Array.from(attrs[ key ]);
+            attrs[key] = Array.from(attrs[key]);
         });
         return attrs;
-    }, [ product ]);
+    }, [product]);
 
     useEffect(() => {
         setSelectedImage(0);
-    }, [ activeVariant ]);
+    }, [activeVariant]);
 
     const handleAttributeChange = (attrName, value) => {
-        const newAttrs = { ...selectedAttributes, [ attrName ]: value };
+        const newAttrs = { ...selectedAttributes, [attrName]: value };
 
         // Find if an exact match exists for this combination
         const exactMatch = product.variants.find(v => {
             const vAttrs = v.attributes || {};
-            return Object.keys(newAttrs).every(k => newAttrs[ k ] === vAttrs[ k ]) &&
-                Object.keys(vAttrs).every(k => newAttrs[ k ] === vAttrs[ k ]);
+            return Object.keys(newAttrs).every(k => newAttrs[k] === vAttrs[k]) &&
+                Object.keys(vAttrs).every(k => newAttrs[k] === vAttrs[k]);
         });
 
         if (exactMatch) {
             setSelectedAttributes(exactMatch.attributes);
         } else {
             // Find any variant that has this newly selected attribute to fallback nicely
-            const fallbackVariant = product.variants.find(v => v.attributes && v.attributes[ attrName ] === value);
+            const fallbackVariant = product.variants.find(v => v.attributes && v.attributes[attrName] === value);
             if (fallbackVariant) {
                 setSelectedAttributes(fallbackVariant.attributes);
             } else {
@@ -113,7 +113,7 @@ const ProductDetail = () => {
     // Fallbacks
     const displayImages = (activeVariant?.images && activeVariant.images.length > 0)
         ? activeVariant.images
-        : (product.images && product.images.length > 0 ? product.images : [ { url: '/snitch_editorial_warm.png' } ]);
+        : (product.images && product.images.length > 0 ? product.images : [{ url: '/snitch_editorial_warm.png' }]);
 
     const displayPrice = activeVariant?.price?.amount
         ? activeVariant.price
@@ -152,7 +152,7 @@ const ProductDetail = () => {
                             {/* Main Image */}
                             <div className="relative w-full aspect-4/5 overflow-hidden group" style={{ backgroundColor: '#f5f3f0' }}>
                                 <img
-                                    src={displayImages[ selectedImage ]?.url || displayImages[ 0 ].url}
+                                    src={displayImages[selectedImage]?.url || displayImages[0].url}
                                     alt={product.title}
                                     className="w-full h-full object-cover transition-opacity duration-500"
 
@@ -204,14 +204,14 @@ const ProductDetail = () => {
                             <div className="h-px w-full mb-8 bg-snitch-border" />
 
                             {/* Options/Variants */}
-                            {Object.entries(availableAttributes).map(([ attrName, values ]) => (
+                            {Object.entries(availableAttributes).map(([attrName, values]) => (
                                 <div key={attrName} className="mb-6">
                                     <h3 className="text-[10px] uppercase tracking-[0.24em] font-medium mb-3 text-snitch-accent">
                                         {attrName}
                                     </h3>
                                     <div className="flex flex-wrap gap-2">
                                         {values.map(val => {
-                                            const isSelected = selectedAttributes[ attrName ] === val;
+                                            const isSelected = selectedAttributes[attrName] === val;
                                             return (
                                                 <button
                                                     key={val}
@@ -251,11 +251,11 @@ const ProductDetail = () => {
                                     disabled={!activeVariant}
                                     className={`w-full py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 font-body bg-snitch-primary text-snitch-surface hover:bg-snitch-accent hover:text-snitch-primary ${!activeVariant ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     onClick={async () => {
-                                        await handleAddItem({
+                                        const res = await handleAddItem({
                                             productId: product._id,
                                             variantId: activeVariant?._id
                                         })
-                                        toast.success("Added to Cart")
+                                        if (res) toast.success("Added to Cart")
                                     }}
                                 >
                                     Add to Cart
@@ -265,39 +265,36 @@ const ProductDetail = () => {
                                     disabled={!activeVariant}
                                     className={`w-full py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 border bg-transparent border-snitch-border text-snitch-primary font-body hover:border-snitch-accent ${!activeVariant ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     onClick={async () => {
-                                        await handleAddItem({
+                                        const res = await handleAddItem({
                                             productId: product._id,
                                             variantId: activeVariant?._id
                                         });
-                                        toast.success("Added to Cart")
-                                        navigate('/cart');
+                                        if (res) {
+                                            toast.success("Added to Cart")
+                                            navigate('/cart');
+                                        }
                                     }}
                                 >
                                     Buy Now
                                 </button>
-                                
+
                                 <button
                                     className={`w-full flex items-center justify-center gap-2 py-4 text-[11px] uppercase tracking-[0.25em] font-medium transition-all duration-300 border bg-transparent font-body hover:border-snitch-accent ${isProductInWishlist(product._id) ? 'border-snitch-accent text-snitch-accent' : 'border-snitch-border text-snitch-primary'}`}
                                     onClick={async () => {
                                         await toggleWishlist(product)
-                                        if (!isProductInWishlist(product._id)) {
-                                            toast.success("Added to Wishlist")
-                                        } else {
-                                            toast.success("Removed from Wishlist")
-                                        }
                                     }}
                                 >
-                                    <svg 
-                                        xmlns="http://www.w3.org/2000/svg" 
-                                        width="16" height="16" 
-                                        viewBox="0 0 24 24" 
-                                        fill={isProductInWishlist(product._id) ? "#C9A96E" : "none"} 
-                                        stroke="currentColor" 
-                                        strokeWidth="1.5" 
-                                        strokeLinecap="round" 
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="16" height="16"
+                                        viewBox="0 0 24 24"
+                                        fill={isProductInWishlist(product._id) ? "#C9A96E" : "none"}
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
                                         strokeLinejoin="round"
                                     >
-                                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                                     </svg>
                                     {isProductInWishlist(product._id) ? 'Saved to Wishlist' : 'Add to Wishlist'}
                                 </button>
