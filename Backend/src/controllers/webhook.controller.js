@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { config } from "../config/config.js";
 import paymentModel from "../models/payment.model.js";
 import cartModel from "../models/cart.model.js";
+import { processSuccessfulPayment } from "../services/order.service.js";
 
 export const razorpayWebhookController = async (req, res) => {
     try {
@@ -30,33 +31,20 @@ export const razorpayWebhookController = async (req, res) => {
 
         if (event === "payment.captured") {
             const orderId = payload.payment.entity.order_id;
+            const paymentId = payload.payment.entity.id;
             
-            const payment = await paymentModel.findOne({ "razorpay.orderId": orderId });
-            
-            if (!payment) {
-                console.error(`[Webhook] Payment not found for orderId: ${orderId}`);
-                return res.status(404).json({ message: "Payment not found" });
+            try {
+                const result = await processSuccessfulPayment(orderId, paymentId);
+                console.log(`[Webhook] ${result.message} for orderId: ${orderId}`);
+                return res.status(200).json({ message: result.message });
+            } catch (error) {
+                console.error(`[Webhook] Error processing payment.captured for orderId: ${orderId}:`, error);
+                // If it's a "Payment not found" we might want to return 404
+                if (error.message.includes("Payment not found")) {
+                    return res.status(404).json({ message: "Payment not found" });
+                }
+                return res.status(400).json({ message: error.message || "Failed to process payment webhook" });
             }
-
-            // Prevent duplicate processing
-            if (payment.status === "paid") {
-                console.log(`[Webhook] Payment already processed for orderId: ${orderId}`);
-                return res.status(200).json({ message: "Already processed" });
-            }
-
-            // Update to paid
-            payment.status = "paid";
-            payment.razorpay.paymentId = payload.payment.entity.id;
-            await payment.save();
-
-            // Clear user's cart
-            await cartModel.findOneAndUpdate(
-                { user: payment.user },
-                { $set: { items: [] } }
-            );
-
-            console.log(`[Webhook] Successfully processed payment.captured for orderId: ${orderId}`);
-            return res.status(200).json({ message: "Webhook processed" });
         }
 
         if (event === "payment.failed") {

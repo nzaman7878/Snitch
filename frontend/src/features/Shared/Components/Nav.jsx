@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router'
 import { useAuth } from '../../auth/hook/useAuth'
-import { useAuth } from '../../auth/hook/useAuth'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const Nav = () => {

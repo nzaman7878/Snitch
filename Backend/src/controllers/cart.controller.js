@@ -7,6 +7,7 @@ import { getCartDetails } from "../dao/cart.dao.js";
 import paymentModel from "../models/payment.model.js";
 import { validatePaymentVerification } from "razorpay/dist/utils/razorpay-utils.js";
 import { config } from "../config/config.js";
+import { processSuccessfulPayment } from "../services/order.service.js";
 
 
 
@@ -289,23 +290,20 @@ export const verifyOrderController = async (req, res) => {
         })
     }
 
-    payment.status = "paid"
-
-    payment.razorpay.paymentId = razorpay_payment_id
-    payment.razorpay.signature = razorpay_signature
-
-    await payment.save()
-
-    // Clear the cart
-    await cartModel.findOneAndUpdate(
-        { user: payment.user },
-        { $set: { items: [] } }
-    )
-
-    return res.status(200).json({
-        message: "Payment verified successfully",
-        success: true
-    })
+    try {
+        await processSuccessfulPayment(razorpay_order_id, razorpay_payment_id, razorpay_signature);
+        
+        return res.status(200).json({
+            message: "Payment verified successfully",
+            success: true
+        });
+    } catch (error) {
+        console.error("Error processing payment:", error);
+        return res.status(400).json({
+            message: error.message || "Failed to process payment",
+            success: false
+        });
+    }
 }
 
 export const getOrderDetailsController = async (req, res) => {

@@ -55,7 +55,7 @@ const productSchema = new mongoose.Schema({
         },
 
     ]
-}, { timestamps: true })
+}, { timestamps: true, optimisticConcurrency: true })
 
 productSchema.index({ title: 'text', description: 'text' })
 
