@@ -34,7 +34,7 @@ export const routes = createBrowserRouter([
             },
             {
                 path: "/profile",
-                element: <Protected><Profile /></Protected>
+                element: <Protected role={["buyer", "seller"]}><Profile /></Protected>
             },
             {
                 path: "/wishlist",
