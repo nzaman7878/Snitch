@@ -4,13 +4,8 @@ import { useProduct } from '../hooks/useProduct';
 import { useCart } from '../../cart/hook/useCart';
 import { useWishlist } from '../hooks/useWishlist';
 import toast from 'react-hot-toast';
-
-// Mock reviews data
-const MOCK_REVIEWS = [
-    { id: 1, author: "James T.", rating: 5, date: "October 12, 2026", text: "Exceptional craftsmanship. The quality is noticeably premium, and it fits perfectly with my daily aesthetic." },
-    { id: 2, author: "Sarah W.", rating: 5, date: "September 28, 2026", text: "Worth every penny. The attention to detail is flawless. Highly recommend!" },
-    { id: 3, author: "Michael R.", rating: 4, date: "September 15, 2026", text: "Beautiful design and great feel. It took a little longer to ship than expected, but the product itself is stunning." }
-];
+import { getProductReviewsApi, createReviewApi } from '../service/review.api';
+import { useSelector } from 'react-redux';
 
 const ProductDetail = () => {
     const { productId } = useParams();
@@ -18,83 +13,94 @@ const ProductDetail = () => {
     const { handleGetProductById, handleGetAllProducts } = useProduct();
     const { handleAddItem } = useCart();
     const { toggleWishlist, isProductInWishlist } = useWishlist();
+    const user = useSelector((state) => state.auth.user);
 
     const [product, setProduct] = useState(null);
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedAttributes, setSelectedAttributes] = useState({});
+    
+    // Reviews state
+    const [reviews, setReviews] = useState([]);
+    const [showReviewForm, setShowReviewForm] = useState(false);
+    const [reviewForm, setReviewForm] = useState({ rating: 5, text: "" });
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-    // Fetch Product Details
-    useEffect(() => {
-        async function fetchProductDetails() {
-            try {
-                const data = await handleGetProductById(productId);
-                const fetchedProduct = data?.product || data;
-                
-                if (fetchedProduct?.variants) {
-                    fetchedProduct.variants = fetchedProduct.variants.map(v => {
-                        // The database `attributes` field is polluted with bad data (e.g., sizes as keys).
-                        // We will strictly construct the attributes map from the `size` and `color` fields.
-                        const attrs = {};
-                        if (v.size) attrs['Size'] = v.size;
-                        if (v.color) attrs['Color'] = v.color;
-                        return { ...v, attributes: attrs };
-                    });
-                }
-                
-                setProduct(fetchedProduct);
-                
-                // Fetch related products based on category and gender (if available)
-                if (fetchedProduct?.category || fetchedProduct?.gender) {
-                    const related = await handleGetAllProducts({ 
-                        category: fetchedProduct.category, 
-                        gender: fetchedProduct.gender,
-                        limit: 5 
-                    });
-                    // Filter out the current product
-                    if (related?.products) {
-                        setRelatedProducts(related.products.filter(p => p._id !== productId).slice(0, 4));
-                    }
-                }
-
-                // Add to recently viewed in localStorage
-                if (fetchedProduct) {
-                    try {
-                        const existing = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
-                        // Remove if already exists to push it to the front
-                        const filtered = existing.filter(p => p._id !== fetchedProduct._id);
-                        filtered.unshift({
-                            _id: fetchedProduct._id,
-                            title: fetchedProduct.title,
-                            price: fetchedProduct.price,
-                            images: fetchedProduct.images,
-                            discount: fetchedProduct.discount
-                        });
-                        // Keep max 8
-                        if (filtered.length > 8) filtered.pop();
-                        localStorage.setItem('recentlyViewed', JSON.stringify(filtered));
-                    } catch (e) {
-                        console.error('Failed to update recently viewed:', e);
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to fetch product details", error);
+    // Fetch Product Details & Reviews
+    const fetchProductDetails = async () => {
+        try {
+            const data = await handleGetProductById(productId);
+            const fetchedProduct = data?.product || data;
+            
+            if (fetchedProduct?.variants) {
+                fetchedProduct.variants = fetchedProduct.variants.map(v => {
+                    const attrs = {};
+                    if (v.size) attrs['Size'] = v.size;
+                    if (v.color) attrs['Color'] = v.color;
+                    return { ...v, attributes: attrs };
+                });
             }
+            
+            setProduct(fetchedProduct);
+            
+            // Fetch related products
+            if (fetchedProduct?.category || fetchedProduct?.gender) {
+                const related = await handleGetAllProducts({ 
+                    category: fetchedProduct.category, 
+                    gender: fetchedProduct.gender,
+                    limit: 5 
+                });
+                if (related?.products) {
+                    setRelatedProducts(related.products.filter(p => p._id !== productId).slice(0, 4));
+                }
+            }
+
+            // Fetch reviews
+            try {
+                const reviewData = await getProductReviewsApi(productId);
+                if (reviewData?.success) {
+                    setReviews(reviewData.reviews);
+                }
+            } catch (e) {
+                console.error("Failed to fetch reviews", e);
+            }
+
+            // Add to recently viewed in localStorage
+            if (fetchedProduct) {
+                try {
+                    const existing = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+                    const filtered = existing.filter(p => p._id !== fetchedProduct._id);
+                    filtered.unshift({
+                        _id: fetchedProduct._id,
+                        title: fetchedProduct.title,
+                        price: fetchedProduct.price,
+                        images: fetchedProduct.images,
+                        discount: fetchedProduct.discount
+                    });
+                    if (filtered.length > 8) filtered.pop();
+                    localStorage.setItem('recentlyViewed', JSON.stringify(filtered));
+                } catch (e) {
+                    console.error('Failed to update recently viewed:', e);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch product details", error);
         }
+    };
+
+    useEffect(() => {
         fetchProductDetails();
     }, [productId]);
 
     // Initialize attributes when product loads
     useEffect(() => {
         if (product?.variants?.length > 0) {
-            // Find first in-stock variant to default to, or just first one
             const firstInStock = product.variants.find(v => v.stock > 0) || product.variants[0];
             setSelectedAttributes(firstInStock.attributes || {});
         }
         setSelectedImage(0);
     }, [product]);
 
-    // Derived active variant
     const activeVariant = useMemo(() => {
         if (!product?.variants || product.variants.length === 0) return null;
         return product.variants.find(v => {
@@ -106,7 +112,6 @@ const ProductDetail = () => {
         });
     }, [product, selectedAttributes]);
 
-    // Available attributes mapping
     const availableAttributes = useMemo(() => {
         if (!product?.variants) return {};
         const attrs = {};
@@ -124,11 +129,9 @@ const ProductDetail = () => {
         return attrs;
     }, [product]);
 
-    // Handle attribute selection
     const handleAttributeChange = (attrName, value) => {
         const newAttrs = { ...selectedAttributes, [attrName]: value };
         
-        // Find if an exact match exists for this combination
         const exactMatch = product.variants.find(v => {
             const vAttrs = v.attributes || {};
             return Object.keys(newAttrs).every(k => newAttrs[k] === vAttrs[k]) &&
@@ -138,13 +141,38 @@ const ProductDetail = () => {
         if (exactMatch) {
             setSelectedAttributes(exactMatch.attributes);
         } else {
-            // Fallback nicely
             const fallbackVariant = product.variants.find(v => v.attributes && v.attributes[attrName] === value);
             if (fallbackVariant) {
                 setSelectedAttributes(fallbackVariant.attributes);
             } else {
                 setSelectedAttributes(newAttrs);
             }
+        }
+    };
+
+    const submitReview = async (e) => {
+        e.preventDefault();
+        if (!user) {
+            toast.error("You must be logged in to leave a review.");
+            return;
+        }
+        if (!reviewForm.text.trim()) {
+            toast.error("Review text is required.");
+            return;
+        }
+        
+        setIsSubmittingReview(true);
+        try {
+            await createReviewApi(productId, reviewForm.rating, reviewForm.text);
+            toast.success("Review submitted successfully!");
+            setShowReviewForm(false);
+            setReviewForm({ rating: 5, text: "" });
+            // Re-fetch product and reviews to get the updated average rating
+            fetchProductDetails();
+        } catch (error) {
+            toast.error(error.message || "Failed to submit review");
+        } finally {
+            setIsSubmittingReview(false);
         }
     };
 
@@ -161,7 +189,6 @@ const ProductDetail = () => {
         );
     }
 
-    // Fallbacks
     const displayImages = (activeVariant?.images && activeVariant.images.length > 0)
         ? activeVariant.images
         : (product.images && product.images.length > 0 ? product.images : [{ url: '/snitch_editorial_warm.png' }]);
@@ -172,7 +199,6 @@ const ProductDetail = () => {
 
     const isInStock = activeVariant ? activeVariant.stock > 0 : false;
     
-    // Stitch MCP Design implementation: Aureate Executive
     return (
         <div className="min-h-screen bg-[#faf9f6] text-[#1a1c1a] font-body selection:bg-[#d4af37]/30 pb-24">
             
@@ -182,7 +208,6 @@ const ProductDetail = () => {
                     
                     {/* LEFT: Image Gallery */}
                     <div className="w-full lg:w-3/5 flex flex-col-reverse md:flex-row gap-4 lg:gap-6">
-                        {/* Thumbnails */}
                         {displayImages.length > 1 && (
                             <div className="flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-y-auto pb-2 md:pb-0 scrollbar-hide w-full md:w-20 lg:w-24 flex-shrink-0 md:max-h-[calc(100vh-160px)]">
                                 {displayImages.map((img, idx) => (
@@ -197,7 +222,6 @@ const ProductDetail = () => {
                             </div>
                         )}
 
-                        {/* Main Image */}
                         <div className="relative w-full aspect-[3/4] md:aspect-[4/5] overflow-hidden group rounded-md bg-[#f4f3f1]">
                             <img
                                 src={displayImages[selectedImage]?.url || displayImages[0].url}
@@ -242,6 +266,17 @@ const ProductDetail = () => {
                                     </span>
                                 )}
                             </div>
+                            {/* Short Rating Display */}
+                            {product.numReviews > 0 && (
+                                <div className="flex items-center gap-2 mt-4 text-[#d4af37]">
+                                    <div className="flex">
+                                        {[...Array(5)].map((_, i) => (
+                                            <svg key={i} className={`w-4 h-4 ${i < Math.round(product.averageRating) ? 'fill-current' : 'fill-[#e3e2e0]'}`} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                        ))}
+                                    </div>
+                                    <span className="text-[12px] text-[#7f7663] font-medium tracking-wide">({product.numReviews} Reviews)</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="h-px w-full mb-8 bg-[#e3e2e0]" />
@@ -259,7 +294,6 @@ const ProductDetail = () => {
                                     {values.map(val => {
                                         const isSelected = selectedAttributes[attrName] === val;
                                         
-                                        // Check if this specific combination would be out of stock
                                         const hypotheticalAttrs = { ...selectedAttributes, [attrName]: val };
                                         const hypVariant = product.variants?.find(v => 
                                             Object.keys(hypotheticalAttrs).every(k => hypotheticalAttrs[k] === (v.attributes || {})[k])
@@ -291,7 +325,7 @@ const ProductDetail = () => {
                             <h3 className="text-[12px] uppercase tracking-[0.1em] font-semibold mb-3 text-[#4d4635]">
                                 The Details
                             </h3>
-                            <p className="text-[15px] leading-relaxed text-[#4d4635]">
+                            <p className="text-[15px] leading-relaxed text-[#4d4635] whitespace-pre-wrap">
                                 {product.description}
                             </p>
                         </div>
@@ -338,16 +372,7 @@ const ProductDetail = () => {
                                     await toggleWishlist(product);
                                 }}
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16" height="16"
-                                    viewBox="0 0 24 24"
-                                    fill={isProductInWishlist(product._id) ? "#d4af37" : "none"}
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={isProductInWishlist(product._id) ? "#d4af37" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                                 </svg>
                                 {isProductInWishlist(product._id) ? 'Saved to Wishlist' : 'Add to Wishlist'}
@@ -381,42 +406,116 @@ const ProductDetail = () => {
                         {/* Rating Summary */}
                         <div className="w-full md:w-1/3">
                             <h2 className="text-2xl md:text-3xl font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif' }}>Client Reviews</h2>
-                            <div className="flex items-end gap-3 mb-4">
-                                <span className="text-5xl font-bold" style={{ fontFamily: 'Playfair Display, serif' }}>4.8</span>
-                                <div className="flex flex-col pb-1">
-                                    <div className="flex text-[#d4af37] mb-1">
-                                        {[1, 2, 3, 4, 5].map(star => (
-                                            <svg key={star} className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                        ))}
+                            
+                            {product.numReviews > 0 ? (
+                                <div className="flex items-end gap-3 mb-6">
+                                    <span className="text-5xl font-bold" style={{ fontFamily: 'Playfair Display, serif' }}>
+                                        {product.averageRating.toFixed(1)}
+                                    </span>
+                                    <div className="flex flex-col pb-1">
+                                        <div className="flex text-[#d4af37] mb-1">
+                                            {[...Array(5)].map((_, i) => (
+                                                <svg key={i} className={`w-4 h-4 ${i < Math.round(product.averageRating) ? 'fill-current' : 'fill-[#e3e2e0]'}`} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                            ))}
+                                        </div>
+                                        <span className="text-[12px] text-[#7f7663]">Based on {product.numReviews} review{product.numReviews !== 1 ? 's' : ''}</span>
                                     </div>
-                                    <span className="text-[12px] text-[#7f7663]">Based on 24 reviews</span>
                                 </div>
-                            </div>
-                            <button className="text-[13px] font-bold border-b border-[#1a1c1a] pb-0.5 hover:text-[#d4af37] hover:border-[#d4af37] transition-colors">
-                                Write a Review
-                            </button>
+                            ) : (
+                                <p className="text-[14px] text-[#4d4635] mb-6">This product does not have any reviews yet.</p>
+                            )}
+                            
+                            {!showReviewForm ? (
+                                <button 
+                                    onClick={() => {
+                                        if(!user) return toast.error("You must be logged in to leave a review.");
+                                        setShowReviewForm(true);
+                                    }}
+                                    className="text-[13px] font-bold border-b border-[#1a1c1a] pb-0.5 hover:text-[#d4af37] hover:border-[#d4af37] transition-colors"
+                                >
+                                    Write a Review
+                                </button>
+                            ) : (
+                                <form onSubmit={submitReview} className="bg-[#f4f3f1] p-6 rounded-md border border-[#e3e2e0] mt-4">
+                                    <h4 className="text-[14px] font-semibold mb-4">Leave Your Review</h4>
+                                    
+                                    <div className="mb-4">
+                                        <label className="text-[12px] uppercase tracking-[0.1em] font-semibold text-[#4d4635] block mb-2">Rating</label>
+                                        <div className="flex gap-1">
+                                            {[1, 2, 3, 4, 5].map(star => (
+                                                <button
+                                                    key={star}
+                                                    type="button"
+                                                    onClick={() => setReviewForm({...reviewForm, rating: star})}
+                                                    className={`w-8 h-8 flex items-center justify-center transition-colors ${star <= reviewForm.rating ? 'text-[#d4af37]' : 'text-[#d0c5af] hover:text-[#d4af37]/50'}`}
+                                                >
+                                                    <svg className="w-6 h-6 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-6">
+                                        <label className="text-[12px] uppercase tracking-[0.1em] font-semibold text-[#4d4635] block mb-2">Review</label>
+                                        <textarea 
+                                            value={reviewForm.text}
+                                            onChange={(e) => setReviewForm({...reviewForm, text: e.target.value})}
+                                            className="w-full h-24 p-3 text-[14px] border border-[#d0c5af] rounded-md focus:outline-none focus:border-[#1a1c1a] bg-white resize-none"
+                                            placeholder="What did you think about this product?"
+                                            required
+                                        ></textarea>
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        <button 
+                                            type="submit" 
+                                            disabled={isSubmittingReview}
+                                            className="flex-1 py-3 bg-[#1a1c1a] text-white text-[12px] uppercase tracking-[0.1em] font-bold rounded-md hover:bg-[#4d4635] disabled:opacity-50 transition-colors"
+                                        >
+                                            {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setShowReviewForm(false)}
+                                            className="py-3 px-6 border border-[#d0c5af] text-[12px] uppercase tracking-[0.1em] font-bold rounded-md hover:border-[#1a1c1a] transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
                         </div>
 
                         {/* Reviews List */}
-                        <div className="w-full md:w-2/3 flex flex-col gap-8">
-                            {MOCK_REVIEWS.map(review => (
-                                <div key={review.id} className="bg-[#ffffff] p-6 rounded-lg border border-[#efeeeb] shadow-sm">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <div className="font-semibold text-[15px] mb-1">{review.author}</div>
-                                            <div className="flex text-[#d4af37]">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <svg key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-current' : 'fill-[#e3e2e0]'}`} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <span className="text-[12px] text-[#7f7663]">{review.date}</span>
-                                    </div>
-                                    <p className="text-[14px] text-[#4d4635] leading-relaxed">
-                                        "{review.text}"
-                                    </p>
+                        <div className="w-full md:w-2/3 flex flex-col gap-6">
+                            {reviews.length === 0 ? (
+                                <div className="bg-[#f4f3f1] p-12 rounded-lg border border-[#efeeeb] flex flex-col items-center justify-center text-center shadow-sm">
+                                    <svg className="w-12 h-12 text-[#d0c5af] mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                    <h3 className="text-[16px] font-semibold text-[#1a1c1a] mb-2">Be the first to review</h3>
+                                    <p className="text-[14px] text-[#7f7663]">Share your thoughts with other customers</p>
                                 </div>
-                            ))}
+                            ) : (
+                                reviews.map(review => (
+                                    <div key={review._id} className="bg-[#ffffff] p-6 rounded-lg border border-[#efeeeb] shadow-sm">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <div className="font-semibold text-[15px] mb-1">{review.user?.name || "Verified Customer"}</div>
+                                                <div className="flex text-[#d4af37]">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <svg key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-current' : 'fill-[#e3e2e0]'}`} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <span className="text-[12px] text-[#7f7663]">
+                                                {new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                            </span>
+                                        </div>
+                                        <p className="text-[14px] text-[#4d4635] leading-relaxed whitespace-pre-wrap">
+                                            {review.text}
+                                        </p>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
