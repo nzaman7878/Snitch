@@ -166,6 +166,66 @@ const Home = () => {
                         </div>
                     </section>
 
+                    {/* Collections Grid */}
+                    <section className="px-4 lg:px-8 xl:px-16 py-16">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-8">
+                            {/* Men's Collection */}
+                            <div 
+                                className="relative aspect-square md:aspect-[4/5] bg-[#f5f3f0] cursor-pointer group overflow-hidden"
+                                onClick={() => navigate('/shop?gender=Men')}
+                            >
+                                <img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=1974&auto=format&fit=crop" alt="Menswear" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                <div className="absolute inset-0 bg-black/10 transition-colors group-hover:bg-black/20"></div>
+                                <div className="absolute bottom-8 left-8">
+                                    <h3 className="text-3xl lg:text-4xl text-white mb-2 tracking-wide" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Menswear</h3>
+                                    <span className="text-[10px] uppercase tracking-[0.2em] text-white border-b border-white/50 pb-1 font-medium">EXPLORE</span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex flex-col gap-4 lg:gap-8">
+                                {/* Women's Collection */}
+                                <div 
+                                    className="relative aspect-video md:aspect-auto md:flex-1 bg-[#f5f3f0] cursor-pointer group overflow-hidden"
+                                    onClick={() => navigate('/shop?gender=Women')}
+                                >
+                                    <img src="https://images.unsplash.com/photo-1550614000-4b95d466f20b?q=80&w=2070&auto=format&fit=crop" alt="Womenswear" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    <div className="absolute inset-0 bg-black/10 transition-colors group-hover:bg-black/20"></div>
+                                    <div className="absolute bottom-8 left-8">
+                                        <h3 className="text-3xl lg:text-4xl text-white mb-2 tracking-wide" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Womenswear</h3>
+                                        <span className="text-[10px] uppercase tracking-[0.2em] text-white border-b border-white/50 pb-1 font-medium">EXPLORE</span>
+                                    </div>
+                                </div>
+
+                                {/* Kids & Summer Grid */}
+                                <div className="grid grid-cols-2 gap-4 lg:gap-8 md:flex-1">
+                                    <div 
+                                        className="relative bg-[#f5f3f0] cursor-pointer group overflow-hidden aspect-square md:aspect-auto"
+                                        onClick={() => navigate('/shop?gender=Kids')}
+                                    >
+                                        <img src="https://images.unsplash.com/photo-1514090458221-65bb69cf63e6?q=80&w=2070&auto=format&fit=crop" alt="Kids" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                        <div className="absolute inset-0 bg-black/10 transition-colors group-hover:bg-black/20"></div>
+                                        <div className="absolute bottom-6 left-6">
+                                            <h3 className="text-2xl text-white mb-2 tracking-wide" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Kids</h3>
+                                            <span className="text-[10px] uppercase tracking-[0.2em] text-white border-b border-white/50 pb-1 font-medium">SHOP</span>
+                                        </div>
+                                    </div>
+
+                                    <div 
+                                        className="relative bg-[#f5f3f0] cursor-pointer group overflow-hidden aspect-square md:aspect-auto"
+                                        onClick={() => navigate('/shop?tags=Summer')}
+                                    >
+                                        <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1920&auto=format&fit=crop" alt="Summer Edit" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                        <div className="absolute inset-0 bg-black/10 transition-colors group-hover:bg-black/20"></div>
+                                        <div className="absolute bottom-6 left-6">
+                                            <h3 className="text-2xl text-white mb-2 tracking-wide" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Summer Edit</h3>
+                                            <span className="text-[10px] uppercase tracking-[0.2em] text-white border-b border-white/50 pb-1 font-medium">SHOP</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     {/* Curated Collections */}
                     <div className="py-24">
                         {loading ? (

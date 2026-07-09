@@ -15,25 +15,32 @@ const Shop = () => {
     const [searchParams] = useSearchParams();
     const urlSearch = searchParams.get('search') || '';
     const urlSort = searchParams.get('sort') || 'newest';
+    const urlGender = searchParams.get('gender') || '';
+    const urlTags = searchParams.get('tags') || '';
 
     const [category, setCategory] = useState('');
     const [sort, setSort] = useState(urlSort);
+    const [gender, setGender] = useState(urlGender);
+    const [tags, setTags] = useState(urlTags);
     const [page, setPage] = useState(1);
 
     // Fetch products when filters or page change
     useEffect(() => {
-        handleGetAllProducts({ search: urlSearch, category, sort, page, limit: 8 });
-    }, [urlSearch, category, sort, page]);
+        handleGetAllProducts({ search: urlSearch, category, gender, tags, sort, page, limit: 8 });
+    }, [urlSearch, category, gender, tags, sort, page]);
 
     // Reset page to 1 if a filter changes (except page itself)
     useEffect(() => {
         setPage(1);
-    }, [urlSearch, category, sort]);
+    }, [urlSearch, category, gender, tags, sort]);
 
     // Update sort if URL changes
+    // Update filters if URL changes
     useEffect(() => {
         setSort(urlSort);
-    }, [urlSort]);
+        setGender(urlGender);
+        setTags(urlTags);
+    }, [urlSort, urlGender, urlTags]);
 
     const handlePreviousPage = () => {
         if (page > 1) setPage(page - 1);
@@ -74,8 +81,20 @@ const Shop = () => {
                     {/* ── Filters & Search Bar ── */}
                     <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 border-b border-t py-6" style={{ borderColor: '#e4e2df' }}>
                         
-                        {/* Category & Sort */}
-                        <div className="flex w-full md:w-auto gap-4 items-center md:ml-auto">
+                        {/* Gender Tabs & Category */}
+                        <div className="flex flex-col md:flex-row w-full md:w-auto gap-4 items-center">
+                            <div className="flex gap-4">
+                                {['', 'Men', 'Women', 'Kids'].map(g => (
+                                    <button
+                                        key={g}
+                                        onClick={() => setGender(g)}
+                                        className={`text-[10px] uppercase tracking-[0.2em] font-medium transition-colors ${gender === g ? 'text-[#1b1c1a] border-b border-[#1b1c1a]' : 'text-[#7A6E63] hover:text-[#1b1c1a]'}`}
+                                    >
+                                        {g === '' ? 'All' : g}
+                                    </button>
+                                ))}
+                            </div>
+                            <span className="hidden md:inline text-gray-300">|</span>
                             <select
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value)}

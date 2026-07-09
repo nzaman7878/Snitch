@@ -19,7 +19,12 @@ const productSchema = new mongoose.Schema({
         type: String,
         default: "Uncategorized"
     },
-    collections: {
+    gender: {
+        type: String,
+        enum: ['Men', 'Women', 'Kids', 'Unisex'],
+        default: 'Unisex'
+    },
+    tags: {
         type: [String],
         default: []
     },

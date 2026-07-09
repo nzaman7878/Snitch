@@ -4,7 +4,7 @@ import { uploadFile } from "../services/storage.service.js";
 
 export async function createProduct(req, res) {
 
-    const { title, description, priceAmount, priceCurrency, category, brand, discount, stock, collections } = req.body;
+    const { title, description, priceAmount, priceCurrency, category, gender, brand, discount, stock, tags, collections } = req.body;
     const seller = req.user;
 
     const images = await Promise.all(req.files.map(async (file) => {
@@ -23,7 +23,8 @@ export async function createProduct(req, res) {
             currency: priceCurrency || "INR"
         },
         category: category || "Uncategorized",
-        collections: collections ? JSON.parse(collections) : [],
+        gender: gender || "Unisex",
+        tags: tags ? JSON.parse(tags) : (collections ? JSON.parse(collections) : []),
         brand: brand || "",
         discount: discount ? Number(discount) : 0,
         stock: stock ? Number(stock) : 0,
@@ -73,7 +74,7 @@ export async function getSellerProducts(req, res) {
 }
 
 export async function getAllProducts(req, res) {
-    const { page = 1, limit = 10, sort = 'newest', search, category, minPrice, maxPrice } = req.query;
+    const { page = 1, limit = 10, sort = 'newest', search, category, gender, tags, minPrice, maxPrice } = req.query;
 
     const query = {};
 
@@ -86,6 +87,17 @@ export async function getAllProducts(req, res) {
 
     if (category) {
         query.category = category;
+    }
+
+    if (gender) {
+        query.gender = gender;
+    }
+
+    if (tags) {
+        const tagsArray = tags.split(',').map(tag => tag.trim());
+        if (tagsArray.length > 0) {
+            query.tags = { $in: tagsArray };
+        }
     }
 
     if (minPrice || maxPrice) {
@@ -213,7 +225,7 @@ export async function addProductVariant(req, res) {
 
 export async function updateProduct(req, res) {
     const { id } = req.params;
-    const { title, description, priceAmount, priceCurrency, category, brand, discount, stock, collections } = req.body;
+    const { title, description, priceAmount, priceCurrency, category, gender, brand, discount, stock, tags, collections } = req.body;
     
     try {
         const product = await productModel.findOneAndUpdate(
@@ -222,7 +234,8 @@ export async function updateProduct(req, res) {
                 title,
                 description,
                 category: category || "Uncategorized",
-                collections: collections || [],
+                gender: gender || "Unisex",
+                tags: tags || collections || [],
                 brand: brand || "",
                 discount: discount ? Number(discount) : 0,
                 stock: stock ? Number(stock) : 0,
