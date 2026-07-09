@@ -35,8 +35,14 @@ export const removeCartItemApi = async ({ productId, variantId }) => {
     return response.data
 }
 
-export const createCartOrder = async () => {
-    const response = await cartApiInstance.post("/payment/create/order")
+export const createCartOrder = async (couponCode = null) => {
+    const payload = couponCode ? { couponCode } : {};
+    const response = await cartApiInstance.post("/payment/create/order", payload)
+    return response.data
+}
+
+export const validateCouponApi = async (code, orderValue) => {
+    const response = await axios.post("/api/coupons/validate", { code, orderValue }, { withCredentials: true })
     return response.data
 }
 

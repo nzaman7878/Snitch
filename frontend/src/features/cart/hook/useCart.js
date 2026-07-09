@@ -36,8 +36,8 @@ export const useCart = () => {
         }
     }
 
-    async function handleCreateCartOrder() {
-        const data = await createCartOrder()
+    async function handleCreateCartOrder(couponCode = null) {
+        const data = await createCartOrder(couponCode)
         return data.order
     }
 

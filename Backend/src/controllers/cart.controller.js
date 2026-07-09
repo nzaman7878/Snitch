@@ -213,7 +213,7 @@ export const removeCartItem = async (req, res) => {
 }
 
 export const createOrderController = async (req, res) => {
-
+    const { couponCode } = req.body;
 
     const cart = await getCartDetails(req.user._id)
 
@@ -224,7 +224,40 @@ export const createOrderController = async (req, res) => {
         })
     }
 
-    const order = await createOrder({ amount: cart.totalPrice, currency: cart.currency })
+    let finalAmount = cart.totalPrice;
+    
+    // Process Coupon if provided
+    if (couponCode) {
+        const couponModel = (await import("../models/coupon.model.js")).default;
+        const coupon = await couponModel.findOne({ code: couponCode.toUpperCase() });
+        
+        if (coupon && coupon.isActive && new Date(coupon.expiryDate) >= new Date()) {
+            // Check usage limit
+            if (coupon.usageLimit === null || coupon.usageCount < coupon.usageLimit) {
+                // Check min order value
+                if (cart.totalPrice >= (coupon.minOrderValue || 0)) {
+                    let discountAmount = 0;
+                    if (coupon.discountType === 'percentage') {
+                        discountAmount = (cart.totalPrice * coupon.discountValue) / 100;
+                        if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
+                            discountAmount = coupon.maxDiscount;
+                        }
+                    } else {
+                        discountAmount = coupon.discountValue;
+                    }
+                    
+                    if (discountAmount > cart.totalPrice) discountAmount = cart.totalPrice;
+                    finalAmount = cart.totalPrice - discountAmount;
+                    
+                    // Increment usage count
+                    coupon.usageCount += 1;
+                    await coupon.save();
+                }
+            }
+        }
+    }
+
+    const order = await createOrder({ amount: finalAmount, currency: cart.currency })
 
     const today = new Date();
     const minEstimate = new Date(today);
@@ -238,7 +271,7 @@ export const createOrderController = async (req, res) => {
             orderId: order.id,
         },
         price: {
-            amount: cart.totalPrice,
+            amount: finalAmount,
             currency: cart.currency
         },
         orderItems: cart.items.map(item => ({

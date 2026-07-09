@@ -12,6 +12,7 @@ import wishlistRouter from "./routes/wishlist.routes.js";
 import webhookRouter from "./routes/webhook.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import reviewRouter from "./routes/review.routes.js";
+import couponRouter from "./routes/coupon.routes.js";
 
 const app = express();
 
@@ -51,5 +52,6 @@ app.use("/api/wishlist", wishlistRouter);
 app.use("/api/webhooks", webhookRouter);
 app.use("/api/orders", orderRouter);
 app.use("/api/reviews", reviewRouter);
+app.use("/api/coupons", couponRouter);
 
 export default app;

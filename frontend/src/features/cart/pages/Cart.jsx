@@ -28,9 +28,55 @@ const Cart = () => {
     const { error, isLoading, Razorpay } = useRazorpay();
     const user = useSelector(state => state.user)
 
+    const [couponInput, setCouponInput] = useState('')
+    const [appliedCoupon, setAppliedCoupon] = useState(null)
+    const [isValidatingCoupon, setIsValidatingCoupon] = useState(false)
+    const [finalTotal, setFinalTotal] = useState(0)
+
     useEffect(() => {
         handleGetCart()
     }, [])
+
+    useEffect(() => {
+        if (cart?.totalPrice !== undefined) {
+            if (appliedCoupon) {
+                // Calculate discounted price
+                let discountAmount = 0;
+                if (appliedCoupon.discountType === 'percentage') {
+                    discountAmount = (cart.totalPrice * appliedCoupon.discountValue) / 100;
+                    if (appliedCoupon.maxDiscount && discountAmount > appliedCoupon.maxDiscount) {
+                        discountAmount = appliedCoupon.maxDiscount;
+                    }
+                } else {
+                    discountAmount = appliedCoupon.discountValue;
+                }
+                
+                if (discountAmount > cart.totalPrice) discountAmount = cart.totalPrice;
+                setFinalTotal(cart.totalPrice - discountAmount);
+            } else {
+                setFinalTotal(cart.totalPrice);
+            }
+        }
+    }, [cart, appliedCoupon])
+
+    const handleApplyCoupon = async () => {
+        if (!couponInput.trim()) return;
+        setIsValidatingCoupon(true);
+        try {
+            const { validateCouponApi } = await import('../service/cart.api');
+            const data = await validateCouponApi(couponInput, cart.totalPrice);
+            if (data.success) {
+                setAppliedCoupon(data.coupon);
+                import('react-hot-toast').then(toast => toast.default.success(data.message || "Coupon applied!"));
+                setCouponInput('');
+            }
+        } catch (error) {
+            import('react-hot-toast').then(toast => toast.default.error(error?.response?.data?.message || "Invalid coupon code"));
+        } finally {
+            setIsValidatingCoupon(false);
+        }
+    }
+
     /* ─── Helpers ─── */
     const getVariantDetails = (product, variantId) => {
         if (!product?.variants || !variantId) return null
@@ -48,7 +94,7 @@ const Cart = () => {
 
 
     async function handleCheckout() {
-        const order = await handleCreateCartOrder()
+        const order = await handleCreateCartOrder(appliedCoupon ? appliedCoupon.code : null)
         console.log(order)
 
 
@@ -422,6 +468,37 @@ const Cart = () => {
                                 {/* Total divider */}
                                 <div className="mb-6" style={{ height: 1, backgroundColor: tokens.surfaceHighest }} />
 
+                                {/* Promo Code Section */}
+                                <div className="mb-6">
+                                    <div className="flex items-center gap-2">
+                                        <input 
+                                            type="text"
+                                            placeholder="Promo Code"
+                                            value={couponInput}
+                                            onChange={e => setCouponInput(e.target.value)}
+                                            className="w-full text-[11px] uppercase tracking-wider px-3 py-2 border outline-none"
+                                            style={{ borderColor: tokens.outlineVariant, backgroundColor: 'transparent', color: tokens.onSurface }}
+                                        />
+                                        <button 
+                                            onClick={handleApplyCoupon}
+                                            disabled={isValidatingCoupon || !couponInput.trim()}
+                                            className="px-4 py-2 text-[10px] uppercase tracking-[0.2em] font-medium transition-colors disabled:opacity-50"
+                                            style={{ backgroundColor: tokens.onSurface, color: tokens.surface }}
+                                        >
+                                            {isValidatingCoupon ? '...' : 'Apply'}
+                                        </button>
+                                    </div>
+                                    {appliedCoupon && (
+                                        <div className="mt-3 flex justify-between items-center bg-[#f5f3f0] p-2 rounded">
+                                            <div>
+                                                <span className="text-[10px] font-medium uppercase tracking-wider text-green-700">Code: {appliedCoupon.code}</span>
+                                                <p className="text-[9px] text-[#7A6E63]">{appliedCoupon.discountType === 'percentage' ? `${appliedCoupon.discountValue}% off` : `₹${appliedCoupon.discountValue} off`}</p>
+                                            </div>
+                                            <button onClick={() => setAppliedCoupon(null)} className="text-[10px] text-red-500 hover:underline">Remove</button>
+                                        </div>
+                                    )}
+                                </div>
+
                                 {/* Grand Total */}
                                 <div className="flex justify-between items-baseline mb-8">
                                     <span
@@ -430,12 +507,19 @@ const Cart = () => {
                                     >
                                         Total
                                     </span>
-                                    <span
-                                        className="text-base uppercase tracking-[0.18em] font-medium"
-                                        style={{ color: tokens.onSurface }}
-                                    >
-                                        {formatCurrency(cart.totalPrice)}
-                                    </span>
+                                    <div className="flex flex-col items-end">
+                                        {appliedCoupon && (
+                                            <span className="text-[10px] line-through text-gray-400 mb-1">
+                                                {formatCurrency(cart.totalPrice)}
+                                            </span>
+                                        )}
+                                        <span
+                                            className="text-base uppercase tracking-[0.18em] font-medium"
+                                            style={{ color: tokens.onSurface }}
+                                        >
+                                            {formatCurrency(finalTotal)}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 {/* Primary CTA */}
