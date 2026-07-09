@@ -87,6 +87,28 @@ const BuyerOrderDetails = () => {
     const currentStageIndex = STATUS_STAGES.indexOf(order.status);
     const isCancelled = order.status === "Cancelled";
 
+    const renderArrivalEstimate = () => {
+        if (isCancelled) {
+            return <p className="leading-relaxed text-red-600">This order has been cancelled.</p>;
+        }
+
+        if (order.status === 'Delivered') {
+            return <p className="leading-relaxed text-green-700">Your curated selection has been delivered.</p>;
+        }
+
+        if (order.estimatedDeliveryDate && order.estimatedDeliveryDate.start && order.estimatedDeliveryDate.end) {
+            const startDate = new Date(order.estimatedDeliveryDate.start).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+            const endDate = new Date(order.estimatedDeliveryDate.end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            return (
+                <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>
+                    Expect arrival between <span className="font-semibold" style={{ color: tokens.onSurface }}>{startDate} — {endDate}</span>.
+                </p>
+            );
+        }
+
+        return <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>Arrival estimate pending...</p>;
+    };
+
     return (
         <div className="min-h-screen py-12 px-6 md:px-12 max-w-7xl mx-auto" style={{ fontFamily: "'Inter', sans-serif" }}>
             <Link to="/orders" className="inline-block text-xs uppercase tracking-widest mb-8 hover:underline" style={{ color: tokens.secondary }}>
@@ -166,8 +188,15 @@ const BuyerOrderDetails = () => {
                             </div>
                         </div>
                     )}
-                </div>
 
+                    {/* Arrival Estimate */}
+                    <div className="mt-12 pt-8 border-t" style={{ borderColor: tokens.outlineVariant }}>
+                        <h3 className="text-xl italic mb-4" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                            Arrival Estimate
+                        </h3>
+                        {renderArrivalEstimate()}
+                    </div>
+                </div>
                 {/* Right Column: Order Items & Summary */}
                 <div className="lg:col-span-8 space-y-12">
                     <div>

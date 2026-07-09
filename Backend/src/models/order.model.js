@@ -50,6 +50,10 @@ const orderSchema = new mongoose.Schema({
     },
     shippingAddress: {
         type: String
+    },
+    estimatedDeliveryDate: {
+        start: Date,
+        end: Date
     }
 }, { timestamps: true });
 

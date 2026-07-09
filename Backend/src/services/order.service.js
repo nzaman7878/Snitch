@@ -85,6 +85,12 @@ export const processSuccessfulPayment = async (orderId, razorpayPaymentId = null
             }
 
             // Create Order records for each seller
+            const today = new Date();
+            const minEstimate = new Date(today);
+            minEstimate.setDate(minEstimate.getDate() + 10);
+            const maxEstimate = new Date(today);
+            maxEstimate.setDate(maxEstimate.getDate() + 15);
+
             for (const [sellerId, items] of sellerNotifications.entries()) {
                 const newOrder = new orderModel({
                     buyer: payment.user,
@@ -98,7 +104,11 @@ export const processSuccessfulPayment = async (orderId, razorpayPaymentId = null
                         price: item.price,
                         images: item.images
                     })),
-                    status: "Pending" // Assuming shipping address isn't in payment model for now
+                    status: "Pending", // Assuming shipping address isn't in payment model for now
+                    estimatedDeliveryDate: {
+                        start: minEstimate,
+                        end: maxEstimate
+                    }
                 });
                 await newOrder.save();
             }
