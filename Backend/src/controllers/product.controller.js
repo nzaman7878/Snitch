@@ -1,5 +1,6 @@
 import productModel from "../models/product.model.js";
 import { uploadFile } from "../services/storage.service.js";
+import { getFromCache, setToCache, clearCache } from "../services/cache.service.js";
 
 
 export async function createProduct(req, res) {
@@ -38,6 +39,9 @@ export async function createProduct(req, res) {
         success: true,
         product
     })
+
+    // Invalidate cache
+    clearCache();
 }
 
 export async function getSellerProducts(req, res) {
@@ -75,6 +79,13 @@ export async function getSellerProducts(req, res) {
 
 export async function getAllProducts(req, res) {
     const { page = 1, limit = 10, sort = 'newest', search, category, gender, tags, minPrice, maxPrice } = req.query;
+
+    const cacheKey = `products_${page}_${limit}_${sort}_${search}_${category}_${gender}_${tags}_${minPrice}_${maxPrice}`;
+    const cachedData = getFromCache(cacheKey);
+
+    if (cachedData) {
+        return res.status(200).json(cachedData);
+    }
 
     const query = {};
 
@@ -124,19 +135,24 @@ export async function getAllProducts(req, res) {
     const products = await productModel.find(query)
         .sort(sortOption)
         .skip(skip)
-        .limit(Number(limit));
+        .limit(Number(limit))
+        .lean();
 
     const totalItems = await productModel.countDocuments(query);
     const totalPages = Math.ceil(totalItems / Number(limit));
 
-    return res.status(200).json({
+    const responseData = {
         message: "Products fetched successfully",
         success: true,
         products,
         currentPage: Number(page),
         totalPages,
         totalItems
-    })
+    };
+
+    setToCache(cacheKey, responseData);
+
+    return res.status(200).json(responseData);
 }
 
 export async function getProductDetails(req, res) {
@@ -249,6 +265,7 @@ export async function updateProduct(req, res) {
             return res.status(404).json({ message: "Product not found or unauthorized", success: false });
         }
 
+        clearCache();
         return res.status(200).json({ message: "Product updated successfully", success: true, product });
     } catch (error) {
         console.error("Error updating product:", error);
@@ -266,6 +283,7 @@ export async function deleteProduct(req, res) {
             return res.status(404).json({ message: "Product not found or unauthorized", success: false });
         }
 
+        clearCache();
         return res.status(200).json({ message: "Product deleted successfully", success: true });
     } catch (error) {
         return res.status(500).json({ message: error.message, success: false });

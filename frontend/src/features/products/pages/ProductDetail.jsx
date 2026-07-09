@@ -44,12 +44,37 @@ const ProductDetail = () => {
                 
                 setProduct(fetchedProduct);
                 
-                // Fetch related products based on category (if available)
-                if (fetchedProduct?.category) {
-                    const related = await handleGetAllProducts({ category: fetchedProduct.category, limit: 5 });
+                // Fetch related products based on category and gender (if available)
+                if (fetchedProduct?.category || fetchedProduct?.gender) {
+                    const related = await handleGetAllProducts({ 
+                        category: fetchedProduct.category, 
+                        gender: fetchedProduct.gender,
+                        limit: 5 
+                    });
                     // Filter out the current product
                     if (related?.products) {
                         setRelatedProducts(related.products.filter(p => p._id !== productId).slice(0, 4));
+                    }
+                }
+
+                // Add to recently viewed in localStorage
+                if (fetchedProduct) {
+                    try {
+                        const existing = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+                        // Remove if already exists to push it to the front
+                        const filtered = existing.filter(p => p._id !== fetchedProduct._id);
+                        filtered.unshift({
+                            _id: fetchedProduct._id,
+                            title: fetchedProduct.title,
+                            price: fetchedProduct.price,
+                            images: fetchedProduct.images,
+                            discount: fetchedProduct.discount
+                        });
+                        // Keep max 8
+                        if (filtered.length > 8) filtered.pop();
+                        localStorage.setItem('recentlyViewed', JSON.stringify(filtered));
+                    } catch (e) {
+                        console.error('Failed to update recently viewed:', e);
                     }
                 }
             } catch (error) {

@@ -100,6 +100,7 @@ const Home = () => {
         bestSellers: [],
         mostDiscounted: []
     });
+    const [recentlyViewed, setRecentlyViewed] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -127,6 +128,12 @@ const Home = () => {
         };
 
         fetchCollections();
+
+        // Load recently viewed
+        try {
+            const viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+            setRecentlyViewed(viewed);
+        } catch(e) {}
     }, []);
 
     const navigateToShop = (sort) => {
@@ -285,6 +292,17 @@ const Home = () => {
                                     navigate={navigate} 
                                     onLinkClick={() => navigateToShop('most_discounted')}
                                 />
+
+                                {recentlyViewed.length > 0 && (
+                                    <ProductCarousel 
+                                        title="Recently Viewed" 
+                                        products={recentlyViewed} 
+                                        toggleWishlist={toggleWishlist} 
+                                        isProductInWishlist={isProductInWishlist} 
+                                        navigate={navigate} 
+                                        onLinkClick={() => navigate('/shop')}
+                                    />
+                                )}
                             </>
                         )}
                     </div>
