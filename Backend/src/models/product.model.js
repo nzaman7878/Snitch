@@ -35,6 +35,14 @@ const productSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    salesCount: {
+        type: Number,
+        default: 0
+    },
+    viewsCount: {
+        type: Number,
+        default: 0
+    },
     price: {
         type: priceSchema,
         required: true

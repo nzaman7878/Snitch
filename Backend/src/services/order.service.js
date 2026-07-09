@@ -34,7 +34,10 @@ export const processSuccessfulPayment = async (orderId, razorpayPaymentId = null
                     "variants.stock": { $gte: item.quantity } 
                 },
                 { 
-                    $inc: { "variants.$.stock": -item.quantity } 
+                    $inc: { 
+                        "variants.$.stock": -item.quantity,
+                        "salesCount": item.quantity
+                    } 
                 },
                 { session }
             );

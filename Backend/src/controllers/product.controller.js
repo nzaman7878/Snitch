@@ -99,6 +99,12 @@ export async function getAllProducts(req, res) {
         sortOption = { 'price.amount': 1 };
     } else if (sort === 'price_desc') {
         sortOption = { 'price.amount': -1 };
+    } else if (sort === 'best_sellers') {
+        sortOption = { salesCount: -1, createdAt: -1 };
+    } else if (sort === 'most_discounted') {
+        sortOption = { discount: -1, createdAt: -1 };
+    } else if (sort === 'trending') {
+        sortOption = { viewsCount: -1, createdAt: -1 };
     }
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -124,7 +130,11 @@ export async function getAllProducts(req, res) {
 export async function getProductDetails(req, res) {
     const { id } = req.params;
 
-    const product = await productModel.findById(id)
+    const product = await productModel.findByIdAndUpdate(
+        id,
+        { $inc: { viewsCount: 1 } },
+        { new: true }
+    );
 
     if (!product) {
         return res.status(404).json({
