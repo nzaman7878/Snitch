@@ -76,7 +76,11 @@ const OrderSuccess = () => {
         const handleStatusUpdate = (payload) => {
             setPhysicalOrders(prevOrders => 
                 prevOrders.map(o => 
-                    o._id === payload.orderId ? { ...o, status: payload.status } : o
+                    o._id === payload.orderId ? { 
+                        ...o, 
+                        status: payload.status,
+                        ...(payload.dispatchedAt && { dispatchedAt: payload.dispatchedAt }) 
+                    } : o
                 )
             );
         };
@@ -289,12 +293,21 @@ const OrderSuccess = () => {
                                             endDate.setDate(endDate.getDate() + 15);
                                         }
 
+                                        const dispatchedOrder = physicalOrders.find(o => o.dispatchedAt);
+
                                         if (endDate) {
                                             const formattedDate = endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
                                             return (
-                                                <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>
-                                                    Your curated selection is being prepared for transit. Expected delivery by <span className="font-semibold" style={{ color: tokens.onSurface }}>{formattedDate}</span>.
-                                                </p>
+                                                <div className="space-y-2">
+                                                    {dispatchedOrder && dispatchedOrder.dispatchedAt && (
+                                                        <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>
+                                                            Dispatched on: <span className="font-semibold" style={{ color: tokens.onSurface }}>{new Date(dispatchedOrder.dispatchedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                                                        </p>
+                                                    )}
+                                                    <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>
+                                                        Your curated selection is being prepared for transit. Expected delivery by <span className="font-semibold" style={{ color: tokens.onSurface }}>{formattedDate}</span>.
+                                                    </p>
+                                                </div>
                                             );
                                         }
 

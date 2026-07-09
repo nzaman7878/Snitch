@@ -30,9 +30,14 @@ export const updateOrderStatus = async (req, res) => {
             return res.status(400).json({ message: "Invalid status", success: false });
         }
 
+        const updateData = { status };
+        if (status === "Out for Delivery") {
+            updateData.dispatchedAt = new Date();
+        }
+
         const order = await orderModel.findOneAndUpdate(
             { _id: id, seller: sellerId },
-            { status },
+            updateData,
             { new: true }
         ).populate("buyer", "fullname email contact");
 
@@ -45,7 +50,8 @@ export const updateOrderStatus = async (req, res) => {
             notifyBuyer(order.buyer._id, {
                 orderId: order._id,
                 status: order.status,
-                razorpayOrderId: order.razorpay?.orderId
+                razorpayOrderId: order.razorpay?.orderId,
+                dispatchedAt: order.dispatchedAt
             });
         }
 

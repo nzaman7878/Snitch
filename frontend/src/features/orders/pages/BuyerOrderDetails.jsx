@@ -54,7 +54,11 @@ const BuyerOrderDetails = () => {
 
         const handleStatusUpdate = (payload) => {
             if (payload.orderId === orderId) {
-                setOrder(prev => prev ? { ...prev, status: payload.status } : prev);
+                setOrder(prev => prev ? { 
+                    ...prev, 
+                    status: payload.status,
+                    ...(payload.dispatchedAt && { dispatchedAt: payload.dispatchedAt }) 
+                } : prev);
             }
         };
 
@@ -108,9 +112,16 @@ const BuyerOrderDetails = () => {
         if (endDate) {
             const formattedDate = endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             return (
-                <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>
-                    Expected delivery by <span className="font-semibold" style={{ color: tokens.onSurface }}>{formattedDate}</span>.
-                </p>
+                <div className="space-y-2">
+                    {order.dispatchedAt && (
+                        <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>
+                            Dispatched on: <span className="font-semibold" style={{ color: tokens.onSurface }}>{new Date(order.dispatchedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                        </p>
+                    )}
+                    <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>
+                        Expected delivery by <span className="font-semibold" style={{ color: tokens.onSurface }}>{formattedDate}</span>.
+                    </p>
+                </div>
             );
         }
 

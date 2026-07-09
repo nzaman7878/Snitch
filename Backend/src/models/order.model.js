@@ -54,6 +54,9 @@ const orderSchema = new mongoose.Schema({
     estimatedDeliveryDate: {
         start: Date,
         end: Date
+    },
+    dispatchedAt: {
+        type: Date
     }
 }, { timestamps: true });
 
