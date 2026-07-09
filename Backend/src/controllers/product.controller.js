@@ -78,9 +78,9 @@ export async function getSellerProducts(req, res) {
 }
 
 export async function getAllProducts(req, res) {
-    const { page = 1, limit = 10, sort = 'newest', search, category, gender, tags, minPrice, maxPrice } = req.query;
+    const { page = 1, limit = 10, sort = 'newest', search, category, gender, tags, minPrice, maxPrice, colors } = req.query;
 
-    const cacheKey = `products_${page}_${limit}_${sort}_${search}_${category}_${gender}_${tags}_${minPrice}_${maxPrice}`;
+    const cacheKey = `products_${page}_${limit}_${sort}_${search}_${category}_${gender}_${tags}_${minPrice}_${maxPrice}_${colors}`;
     const cachedData = getFromCache(cacheKey);
 
     if (cachedData) {
@@ -108,6 +108,13 @@ export async function getAllProducts(req, res) {
         const tagsArray = tags.split(',').map(tag => tag.trim());
         if (tagsArray.length > 0) {
             query.tags = { $in: tagsArray };
+        }
+    }
+
+    if (colors) {
+        const colorsArray = colors.split(',').map(c => c.trim());
+        if (colorsArray.length > 0) {
+            query['variants.color'] = { $in: colorsArray };
         }
     }
 
