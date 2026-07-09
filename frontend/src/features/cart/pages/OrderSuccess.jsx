@@ -267,12 +267,8 @@ const OrderSuccess = () => {
                                         Arrival Estimate
                                     </h3>
                                     {(() => {
-                                        if (physicalOrders.length === 0) {
-                                            return <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>Calculating arrival estimate...</p>;
-                                        }
-
-                                        const isAllCancelled = physicalOrders.every(o => o.status === 'Cancelled');
-                                        const isAllDelivered = physicalOrders.every(o => o.status === 'Delivered');
+                                        const isAllCancelled = physicalOrders.length > 0 && physicalOrders.every(o => o.status === 'Cancelled');
+                                        const isAllDelivered = physicalOrders.length > 0 && physicalOrders.every(o => o.status === 'Delivered');
 
                                         if (isAllCancelled) {
                                             return <p className="leading-relaxed text-red-600">This order has been cancelled.</p>;
@@ -282,18 +278,27 @@ const OrderSuccess = () => {
                                             return <p className="leading-relaxed text-green-700">Your curated selection has been delivered.</p>;
                                         }
 
-                                        const estimate = physicalOrders.find(o => o.estimatedDeliveryDate)?.estimatedDeliveryDate;
-                                        if (estimate && estimate.start && estimate.end) {
-                                            const startDate = new Date(estimate.start).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-                                            const endDate = new Date(estimate.end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                                        const estimate = (physicalOrders.find(o => o.estimatedDeliveryDate)?.estimatedDeliveryDate) || order?.estimatedDeliveryDate;
+                                        
+                                        let endDate;
+                                        if (estimate && estimate.end) {
+                                            endDate = new Date(estimate.end);
+                                        } else if (order) {
+                                            // Fallback dynamically for old orders
+                                            endDate = new Date(order.createdAt || Date.now());
+                                            endDate.setDate(endDate.getDate() + 15);
+                                        }
+
+                                        if (endDate) {
+                                            const formattedDate = endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
                                             return (
                                                 <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>
-                                                    Your curated selection is being prepared for transit. Expect arrival between <span className="font-semibold" style={{ color: tokens.onSurface }}>{startDate} — {endDate}</span>.
+                                                    Your curated selection is being prepared for transit. Expected delivery by <span className="font-semibold" style={{ color: tokens.onSurface }}>{formattedDate}</span>.
                                                 </p>
                                             );
                                         }
 
-                                        return <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>Arrival estimate pending...</p>;
+                                        return <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>Calculating arrival estimate...</p>;
                                     })()}
                                 </div>
                                 

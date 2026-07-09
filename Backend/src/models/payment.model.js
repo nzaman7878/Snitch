@@ -32,7 +32,11 @@ const paymentSchema = new mongoose.Schema({
             description: String,
             price: priceSchema
         }
-    ]
+    ],
+    estimatedDeliveryDate: {
+        start: Date,
+        end: Date
+    }
 })
 
 

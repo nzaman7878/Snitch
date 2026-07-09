@@ -87,7 +87,7 @@ export const processSuccessfulPayment = async (orderId, razorpayPaymentId = null
             // Create Order records for each seller
             const today = new Date();
             const minEstimate = new Date(today);
-            minEstimate.setDate(minEstimate.getDate() + 10);
+            minEstimate.setDate(minEstimate.getDate() + 5);
             const maxEstimate = new Date(today);
             maxEstimate.setDate(maxEstimate.getDate() + 15);
 

@@ -226,6 +226,12 @@ export const createOrderController = async (req, res) => {
 
     const order = await createOrder({ amount: cart.totalPrice, currency: cart.currency })
 
+    const today = new Date();
+    const minEstimate = new Date(today);
+    minEstimate.setDate(minEstimate.getDate() + 5);
+    const maxEstimate = new Date(today);
+    maxEstimate.setDate(maxEstimate.getDate() + 15);
+
     const payment = await paymentModel.create({
         user: req.user._id,
         razorpay: {
@@ -246,7 +252,11 @@ export const createOrderController = async (req, res) => {
                 amount: item.product.variants.price.amount || item.product.price.amount,
                 currency: item.product.variants.price.currency || item.product.price.currency
             }
-        }))
+        })),
+        estimatedDeliveryDate: {
+            start: minEstimate,
+            end: maxEstimate
+        }
     })
 
     return res.status(200).json({

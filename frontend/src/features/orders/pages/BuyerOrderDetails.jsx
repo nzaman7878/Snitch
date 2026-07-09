@@ -96,12 +96,20 @@ const BuyerOrderDetails = () => {
             return <p className="leading-relaxed text-green-700">Your curated selection has been delivered.</p>;
         }
 
-        if (order.estimatedDeliveryDate && order.estimatedDeliveryDate.start && order.estimatedDeliveryDate.end) {
-            const startDate = new Date(order.estimatedDeliveryDate.start).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-            const endDate = new Date(order.estimatedDeliveryDate.end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        let endDate;
+        if (order.estimatedDeliveryDate && order.estimatedDeliveryDate.end) {
+            endDate = new Date(order.estimatedDeliveryDate.end);
+        } else {
+            // Fallback dynamically for old orders
+            endDate = new Date(order.createdAt || Date.now());
+            endDate.setDate(endDate.getDate() + 15);
+        }
+
+        if (endDate) {
+            const formattedDate = endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             return (
                 <p className="leading-relaxed" style={{ color: tokens.onSurfaceVariant }}>
-                    Expect arrival between <span className="font-semibold" style={{ color: tokens.onSurface }}>{startDate} — {endDate}</span>.
+                    Expected delivery by <span className="font-semibold" style={{ color: tokens.onSurface }}>{formattedDate}</span>.
                 </p>
             );
         }
