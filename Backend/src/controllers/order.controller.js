@@ -1,4 +1,5 @@
 import orderModel from "../models/order.model.js";
+import { notifyBuyer } from "../services/socket.service.js";
 
 export const getSellerOrders = async (req, res) => {
     try {
@@ -24,7 +25,7 @@ export const updateOrderStatus = async (req, res) => {
         const { status } = req.body;
         const sellerId = req.user._id;
 
-        const validStatuses = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"];
+        const validStatuses = ["Pending", "Processing", "Shipped", "Out for Delivery", "Delivered", "Cancelled"];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({ message: "Invalid status", success: false });
         }
@@ -37,6 +38,15 @@ export const updateOrderStatus = async (req, res) => {
 
         if (!order) {
             return res.status(404).json({ message: "Order not found or unauthorized", success: false });
+        }
+
+        // Notify the buyer in real-time
+        if (order.buyer && order.buyer._id) {
+            notifyBuyer(order.buyer._id, {
+                orderId: order._id,
+                status: order.status,
+                razorpayOrderId: order.razorpay?.orderId
+            });
         }
 
         return res.status(200).json({
@@ -148,6 +158,70 @@ export const getSellerAnalytics = async (req, res) => {
 
     } catch (error) {
         console.error("Error fetching analytics:", error);
+        return res.status(500).json({ message: error.message, success: false });
+    }
+};
+
+export const getBuyerOrders = async (req, res) => {
+    try {
+        const buyerId = req.user._id;
+        const orders = await orderModel.find({ buyer: buyerId })
+            .populate("seller", "fullname email")
+            .populate("items.product", "title category images")
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            message: "Orders fetched successfully",
+            success: true,
+            orders
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message, success: false });
+    }
+};
+
+export const getBuyerOrderDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const buyerId = req.user._id;
+
+        const order = await orderModel.findOne({ _id: id, buyer: buyerId })
+            .populate("seller", "fullname email")
+            .populate("items.product", "title category images");
+
+        if (!order) {
+            return res.status(404).json({ message: "Order not found or unauthorized", success: false });
+        }
+
+        return res.status(200).json({
+            message: "Order details fetched successfully",
+            success: true,
+            order
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message, success: false });
+    }
+};
+
+export const getOrdersByPaymentId = async (req, res) => {
+    try {
+        const { paymentId } = req.params;
+        const buyerId = req.user._id;
+
+        const orders = await orderModel.find({ paymentId, buyer: buyerId })
+            .populate("seller", "fullname email")
+            .populate("items.product", "title category images");
+
+        if (!orders || orders.length === 0) {
+            return res.status(404).json({ message: "No orders found for this payment", success: false });
+        }
+
+        return res.status(200).json({
+            message: "Orders fetched successfully",
+            success: true,
+            orders
+        });
+    } catch (error) {
         return res.status(500).json({ message: error.message, success: false });
     }
 };

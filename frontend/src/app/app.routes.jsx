@@ -14,6 +14,8 @@ import Profile from "../features/auth/pages/Profile";
 import Wishlist from "../features/products/pages/Wishlist";
 import SellerOrders from "../features/products/pages/SellerOrders";
 import SellerAnalytics from "../features/products/pages/SellerAnalytics";
+import BuyerOrders from "../features/orders/pages/BuyerOrders";
+import BuyerOrderDetails from "../features/orders/pages/BuyerOrderDetails";
 
 export const routes = createBrowserRouter([
 
@@ -47,6 +49,14 @@ export const routes = createBrowserRouter([
             {
                 path: "/cart",
                 element: <Protected> <Cart /></Protected>
+            },
+            {
+                path: "/orders",
+                element: <Protected> <BuyerOrders /></Protected>
+            },
+            {
+                path: "/order/:orderId",
+                element: <Protected> <BuyerOrderDetails /></Protected>
             },
             {
                 path: "/order-success",

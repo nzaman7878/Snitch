@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useLocation, Link } from 'react-router'
 import { useSelector } from 'react-redux'
 import { getOrderDetails, getLatestOrder } from '../service/cart.api'
+import { getOrdersByPaymentId } from '../../orders/service/order.api'
+import { useSocket } from '../../Shared/hooks/useSocket'
 
 const tokens = {
     surface: '#fbf9f6',
@@ -27,20 +29,36 @@ const OrderSuccess = () => {
     const orderIdParam = queryParams.get("order_id")
 
     const [order, setOrder] = useState(null)
+    const [physicalOrders, setPhysicalOrders] = useState([])
     const [loading, setLoading] = useState(true)
+    const { socket } = useSocket()
 
     useEffect(() => {
         const fetchOrder = async () => {
             try {
+                let fetchedPayment = null;
                 if (orderIdParam && orderIdParam !== "SN-00000") {
                     const data = await getOrderDetails(orderIdParam)
                     if (data.success) {
+                        fetchedPayment = data.order;
                         setOrder(data.order)
                     }
                 } else {
                     const data = await getLatestOrder()
                     if (data.success) {
+                        fetchedPayment = data.order;
                         setOrder(data.order)
+                    }
+                }
+
+                if (fetchedPayment && fetchedPayment._id) {
+                    try {
+                        const ordersData = await getOrdersByPaymentId(fetchedPayment._id);
+                        if (ordersData.success) {
+                            setPhysicalOrders(ordersData.orders);
+                        }
+                    } catch (err) {
+                        console.error("Error fetching physical orders:", err);
                     }
                 }
             } catch (error) {
@@ -51,6 +69,24 @@ const OrderSuccess = () => {
         }
         fetchOrder()
     }, [orderIdParam])
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleStatusUpdate = (payload) => {
+            setPhysicalOrders(prevOrders => 
+                prevOrders.map(o => 
+                    o._id === payload.orderId ? { ...o, status: payload.status } : o
+                )
+            );
+        };
+
+        socket.on("order_status_updated", handleStatusUpdate);
+
+        return () => {
+            socket.off("order_status_updated", handleStatusUpdate);
+        };
+    }, [socket]);
 
     if (loading) {
         return (
@@ -182,6 +218,47 @@ const OrderSuccess = () => {
                         {/* Right Column: Delivery Details & Actions */}
                         <div className="lg:col-span-5 lg:sticky lg:top-40 space-y-12 mt-12 lg:mt-0">
                             <div className="space-y-10">
+                                <div className="space-y-4">
+                                    <h3 
+                                        className="text-xl italic mb-4"
+                                        style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                                    >
+                                        Fulfillment Status
+                                    </h3>
+                                    
+                                    {physicalOrders.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {physicalOrders.map((physOrder, idx) => {
+                                                const isCancelled = physOrder.status === 'Cancelled';
+                                                const isDelivered = physOrder.status === 'Delivered';
+                                                
+                                                return (
+                                                    <div key={physOrder._id} className="flex justify-between items-center border-b pb-3" style={{ borderColor: tokens.outlineVariant }}>
+                                                        <div>
+                                                            <p className="text-xs uppercase tracking-widest" style={{ color: tokens.secondary }}>Order #{physOrder._id.slice(-6).toUpperCase()}</p>
+                                                            <p className="text-sm font-medium mt-1" style={{ color: tokens.onSurface }}>{physOrder.items.length} item(s)</p>
+                                                        </div>
+                                                        <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm" 
+                                                            style={{ 
+                                                                backgroundColor: isCancelled ? '#fce8e6' : (isDelivered ? '#e6f4ea' : tokens.surfaceHigh),
+                                                                color: isCancelled ? '#c5221f' : (isDelivered ? '#137333' : tokens.onSurface)
+                                                            }}
+                                                        >
+                                                            {physOrder.status}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p 
+                                            className="leading-relaxed font-semibold uppercase tracking-widest text-lg"
+                                            style={{ color: tokens.primaryDark }}
+                                        >
+                                            {order?.status || "Pending"}
+                                        </p>
+                                    )}
+                                </div>
                                 <div className="space-y-4">
                                     <h3 
                                         className="text-xl italic"

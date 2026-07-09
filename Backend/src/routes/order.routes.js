@@ -1,6 +1,6 @@
 import express from 'express';
-import { authenticateSeller } from '../middlewares/auth.middleware.js';
-import { getSellerOrders, updateOrderStatus, getSellerAnalytics } from '../controllers/order.controller.js';
+import { authenticateSeller, authenticateUser } from '../middlewares/auth.middleware.js';
+import { getSellerOrders, updateOrderStatus, getSellerAnalytics, getBuyerOrders, getBuyerOrderDetails, getOrdersByPaymentId } from '../controllers/order.controller.js';
 
 const router = express.Router();
 
@@ -24,5 +24,10 @@ router.get("/seller", authenticateSeller, getSellerOrders);
  * @access Private (Seller only)
  */
 router.put("/:id/status", authenticateSeller, updateOrderStatus);
+
+// Buyer Routes
+router.get("/buyer", authenticateUser, getBuyerOrders);
+router.get("/buyer/:id", authenticateUser, getBuyerOrderDetails);
+router.get("/payment/:paymentId", authenticateUser, getOrdersByPaymentId);
 
 export default router;

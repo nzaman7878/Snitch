@@ -54,3 +54,11 @@ export const notifySeller = (sellerId, payload) => {
         io.to(socketId).emit("new_order", payload);
     }
 };
+
+export const notifyBuyer = (buyerId, payload) => {
+    if (!io) return;
+    const socketId = userSockets.get(buyerId.toString());
+    if (socketId) {
+        io.to(socketId).emit("order_status_updated", payload);
+    }
+};
