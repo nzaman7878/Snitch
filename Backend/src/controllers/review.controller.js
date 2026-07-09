@@ -1,5 +1,6 @@
 import reviewModel from '../models/review.model.js';
 import productModel from '../models/product.model.js';
+import orderModel from '../models/order.model.js';
 import { clearCache } from '../services/cache.service.js';
 
 export async function createReview(req, res) {
@@ -11,6 +12,16 @@ export async function createReview(req, res) {
         const product = await productModel.findById(productId);
         if (!product) {
             return res.status(404).json({ message: "Product not found", success: false });
+        }
+
+        // Ensure user has purchased the product
+        const hasPurchased = await orderModel.findOne({
+            buyer: userId,
+            'items.product': productId
+        });
+
+        if (!hasPurchased) {
+            return res.status(403).json({ message: "You can only review products you have purchased", success: false });
         }
 
         // Check if user already reviewed this product
@@ -55,7 +66,7 @@ export async function getProductReviews(req, res) {
         const { productId } = req.params;
 
         const reviews = await reviewModel.find({ product: productId })
-            .populate('user', 'name')
+            .populate('user', 'fullname')
             .sort({ createdAt: -1 });
 
         return res.status(200).json({ message: "Reviews fetched successfully", success: true, reviews });
